@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Initialize npm
 npm init --yes
 
