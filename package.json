@@ -1,0 +1,39 @@
+{
+  "name": "c20-invest-dapp",
+  "version": "0.1.0",
+  "description": "Secure C20 investment contract",
+  "scripts": {
+    "docs": "scripts/docs.sh",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:js": "eslint --ignore-path .gitignore .",
+    "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
+    "test": "mocha --exit --recursive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "warren@localhost:/media/Database/Repositories/c20-invest-dapp"
+  },
+  "keywords": [],
+  "author": "Warren Jitsing",
+  "license": "ISC",
+  "devDependencies": {
+    "@openzeppelin/test-environment": "^0.1.4",
+    "@openzeppelin/test-helpers": "^0.5.6",
+    "chai": "^4.2.0",
+    "eslint": "^7.7.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-mocha-no-only": "^1.1.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "ethereumjs-util": "^7.0.4",
+    "ganache-cli": "^6.10.1",
+    "ganache-core": "^2.11.2",
+    "mocha": "^8.1.2",
+    "solhint": "^3.2.0",
+    "solidity-coverage": "^0.7.10",
+    "truffle": "^5.1.42"
+  },
+  "dependencies": {}
+}
