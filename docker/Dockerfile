@@ -65,6 +65,7 @@ COPY contracts /c20-invest/contracts
 COPY docs /c20-invest/docs
 COPY migrations /c20-invest/migrations
 COPY scripts /c20-invest/scripts
+COPY test /c20-invest/test
 COPY [                      \
     ".eslintrc",            \
     ".mocharc.js",          \

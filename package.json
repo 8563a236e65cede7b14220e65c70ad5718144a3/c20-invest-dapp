@@ -8,7 +8,8 @@
     "lint:js": "eslint --ignore-path .gitignore .",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "test": "mocha --exit --recursive",
-    "docker": "scripts/docker_setup.sh"
+    "docker_setup": "scripts/docker_setup.sh",
+    "docker_interactive": "docker container run -it contract_tester"
   },
   "repository": {
     "type": "git",
