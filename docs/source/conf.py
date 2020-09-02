@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'C20 Invest Dapp'
-copyright = '2020, Warren Jitsing'
-author = 'Warren Jitsing'
+copyright = '2020, Invictus Capital'
+author = 'Invictus Capital'
 
 
 # -- General configuration ---------------------------------------------------

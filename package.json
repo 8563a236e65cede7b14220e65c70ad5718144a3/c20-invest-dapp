@@ -16,7 +16,7 @@
     "url": "warren@localhost:/media/Database/Repositories/c20-invest-dapp"
   },
   "keywords": [],
-  "author": "Warren Jitsing",
+  "author": "Invictus Capital",
   "license": "ISC",
   "devDependencies": {
     "@openzeppelin/test-environment": "^0.1.4",
@@ -34,8 +34,10 @@
     "ganache-core": "^2.11.2",
     "mocha": "^8.1.2",
     "solhint": "^3.2.0",
-    "solidity-coverage": "^0.7.10",
-    "truffle": "^5.1.42"
+    "solidity-coverage": "^0.7.10"
   },
-  "dependencies": {}
+  "dependencies": {
+    "solc": "^0.4.11",
+    "truffle": "^5.1.42"
+  }
 }
