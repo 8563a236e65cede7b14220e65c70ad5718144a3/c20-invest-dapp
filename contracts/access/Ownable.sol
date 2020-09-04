@@ -42,7 +42,7 @@ contract Ownable {
     }
 
     /// @notice Get the current list of owners for the contract
-    /// @dev Allows indirect access to the private variable _owners.
+    /// @dev Allows indirect read-only access to the private variable _owners.
     /// May be expensive if the array is large in which case an implementation
     /// that uses a mapping instead of an array would be preferred
     /// @return owners An array of owner addresses
@@ -73,6 +73,30 @@ contract Ownable {
         return false;
     }
 
+    /// @notice Get the index of an owner address
+    /// @dev Walks through the _owners array to find the index
+    /// of the given address.
+    /// @return index The index of the given address or -1 if
+    /// not found
+    function ownerIndex(address ownerAddress)
+    public
+    view
+    returns (int index) {
+        uint i;
+        uint n = _owners.length;
+        int address_index = -1;
+
+        for(i=0; i<n; i++){
+            if (ownerAddress == _owners[i]) {
+                address_index = int(i);
+                break;
+            }
+        }
+
+        return address_index;
+    }
+
+    /// @dev Guard against non-owners calling privileged functions
     modifier onlyOwner() {
         require(
             checkOwner(msg.sender),
@@ -80,5 +104,72 @@ contract Ownable {
         );
         _;
     }
+
+    /// @notice Adds a new owner for the contract
+    /// @dev Restricted to existing owners. Checks
+    /// that the given address is not already an owner
+    /// @param newOwner The address to grant root privileges to
+    function addOwner(address newOwner)
+    public
+    onlyOwner
+    {
+        require(
+            !checkOwner(newOwner),
+            "Ownable: owner already exists"
+        );
+        _owners.push(newOwner);
+    }
+
+    /// @notice Remove an address from owners list
+    /// @dev Restricted to existing owners.
+    /// This could allow a malicious actor to take complete
+    /// control of the contract by removing all other owners.
+    /// Trust is paramount when assigning ownership. To mitigate this,
+    /// one could require two owners to call the removeOwner() function
+    /// and deletion would occur on the second call. Does not allow
+    /// removal of ownership if there is just a single owner.
+    /// @param owner The address to revoke root privileges from
+    function removeOwner(address owner)
+    public
+    onlyOwner
+    {
+        require(
+            _owners.length > 1,
+            "Ownable: cannot remove only owner"
+        );
+        int index = -1;
+
+        index = ownerIndex(owner);
+
+        require(
+            index != -1,
+            "Ownable: owner does not exists"
+        );
+
+        _owners[uint(index)] = _owners[_owners.length -1];
+        _owners.pop();
+    }
+
+    /// @notice Revoke ownership of contract
+    /// @dev Convenience function that just calls
+    /// removeOwner(msg.sender)
+    function revokeOwnership()
+    public
+    onlyOwner
+    {
+        removeOwner(msg.sender);
+    }
+
+    /// @notice Transfer ownership of contract
+    /// @dev Convenience function that calls addOwner(newOwner)
+    /// and then revokeOwnership()
+    function transferOwnership(address newOwner)
+    public
+    onlyOwner
+    {
+        addOwner(newOwner);
+        revokeOwnership();
+    }
+
 
 }
