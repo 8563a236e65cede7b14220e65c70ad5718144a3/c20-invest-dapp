@@ -12,6 +12,10 @@ Welcome to C20 Invest Dapp's documentation!
 
    modules
    ownable.rst
+   c20vesting.rst
+   standardtoken.rst
+   safemath.rst
+   token.rst
 
 Indices and tables
 ==================
