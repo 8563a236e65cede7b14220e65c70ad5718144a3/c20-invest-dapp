@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.6.12 <=0.7.0;
-
-
+pragma solidity ^0.7.0;
 
 /// @title Ownership Base Contract
 /// @author Invictus Capital
@@ -21,7 +19,7 @@ pragma solidity >=0.6.12 <=0.7.0;
 /// access of functions to the owner of the contract.
 contract Ownable {
 
-    /// Array of owner addresses
+    /// @dev Array of owner addresses
     address[] private _owners;
 
     /// Constructor for Ownable
@@ -29,7 +27,7 @@ contract Ownable {
     /// initial owners of the contract. Pass an empty array to
     /// set the sole owner of the contract as the address which deployed
     /// the contract
-    constructor(address[] memory owners) public {
+    constructor(address[] memory owners) {
         uint i;
         uint n = owners.length;
         if (n == 0) {
@@ -40,4 +38,12 @@ contract Ownable {
             }
         }
     }
+
+    function get_owners()
+    public
+    view
+    returns (address[] memory owners){
+        return _owners;
+    }
+
 }

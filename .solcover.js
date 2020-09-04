@@ -1,8 +1,8 @@
 module.exports = {
     norpc: true,
     testCommand: 'npm test',
-    compileCommand: 'npm run compile',
+    compileCommand: 'npx truffle compile',
     skipFiles: [
-        'mocks',
+        "mocks"
     ]
 }
