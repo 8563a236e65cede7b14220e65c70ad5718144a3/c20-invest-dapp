@@ -20,7 +20,8 @@ project = 'C20 Invest Dapp'
 copyright = '2020, Invictus Capital'
 author = 'Invictus Capital'
 
-
+js_source_path = os.path.abspath('../..')
+autodoc_lookup_path = os.path.abspath('../../contracts')
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
