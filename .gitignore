@@ -5,4 +5,4 @@ docs/build
 build
 coverage
 coverage.json
-package-lock.jsom
+package-lock.json
