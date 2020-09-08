@@ -10,11 +10,14 @@ Welcome to C20 Invest Dapp's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   modules
-   ownable.rst
+   c20.rst
    c20vesting.rst
+   c20invest.rst
+   ownable.rst
+   proxy.rst
    standardtoken.rst
    safemath.rst
+   safemathnew.rst
    token.rst
 
 Indices and tables

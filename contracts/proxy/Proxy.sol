@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.0;
 
-abstract contract Proxy {
+contract Proxy {
     function _delegate(address implementation) internal {
         assembly {
             calldatacopy(0, 0, calldatasize())

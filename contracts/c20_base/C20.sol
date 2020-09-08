@@ -5,7 +5,7 @@ import './StandardToken.sol';
 
 contract C20 is StandardToken {
 
-    // FIELDS
+
 
     string public name = "Crypto20";
     string public symbol = "C20";
@@ -14,53 +14,53 @@ contract C20 is StandardToken {
 
     uint256 public tokenCap = 86206896 * 10**18;
 
-    // crowdsale parameters
+
     uint256 public fundingStartBlock;
     uint256 public fundingEndBlock;
 
-    // vesting fields
+
     address public vestingContract;
     bool private vestingSet = false;
 
-    // root control
+
     address payable public fundWallet;
-    // control of liquidity and limited control of updatePrice
+
     address public controlWallet;
-    // time to wait between controlWallet price updates
+
     uint256 public waitTime = 5 hours;
 
-    // fundWallet controlled state variables
-    // halted: halt buying due to emergency, tradeable: signal that assets have been acquired
+
+
     bool public halted = false;
     bool public tradeable = false;
 
-    // -- totalSupply defined in StandardToken
-    // -- mapping to token balances done in StandardToken
+
+
 
     uint256 public previousUpdateTime = 0;
     Price public currentPrice;
     uint256 public minAmount = 0.04 ether;
 
-    // map participant address to a withdrawal request
+
     mapping (address => Withdrawal) public withdrawals;
-    // maps previousUpdateTime to the next price
+
     mapping (uint256 => Price) public prices;
-    // maps addresses
+
     mapping (address => bool) public whitelist;
 
-    // TYPES
 
-    struct Price { // tokensPerEth
+
+    struct Price {
         uint256 numerator;
         uint256 denominator;
     }
 
     struct Withdrawal {
         uint256 tokens;
-        uint256 time; // time for each withdrawal is set to the previousUpdateTime
+        uint256 time;
     }
 
-    // EVENTS
+
 
     event Buy(address indexed participant, address indexed beneficiary, uint256 ethValue, uint256 amountTokens);
     event AllocatePresale(address indexed participant, uint256 amountTokens);
@@ -71,32 +71,32 @@ contract C20 is StandardToken {
     event WithdrawRequest(address indexed participant, uint256 amountTokens);
     event Withdraw(address indexed participant, uint256 amountTokens, uint256 etherAmount);
 
-    // MODIFIERS
 
-    modifier isTradeable { // exempt vestingContract and fundWallet to allow dev allocations
+
+    modifier isTradeable() {
         require(tradeable || msg.sender == fundWallet || msg.sender == vestingContract);
         _;
     }
 
-    modifier onlyWhitelist {
+    modifier onlyWhitelist() {
         require(whitelist[msg.sender]);
         _;
     }
 
-    modifier onlyFundWallet {
+    modifier onlyFundWallet() {
         require(msg.sender == fundWallet);
         _;
     }
 
-    modifier onlyManagingWallets {
+    modifier onlyManagingWallets() {
         require(msg.sender == controlWallet || msg.sender == fundWallet);
         _;
     }
 
-    modifier only_if_controlWallet {
+    modifier only_if_controlWallet() {
         if (msg.sender == controlWallet) _;
     }
-    modifier require_waited {
+    modifier require_waited() {
         require(safeSub(block.timestamp, waitTime) >= previousUpdateTime);
         _;
     }
@@ -104,7 +104,7 @@ contract C20 is StandardToken {
         if (newNumerator > currentPrice.numerator) _;
     }
 
-    // CONSTRUCTOR
+
 
     constructor(address controlWalletInput, uint256 priceNumeratorInput, uint256 startBlockInput, uint256 endBlockInput) {
         require(controlWalletInput != address(0));
@@ -114,13 +114,13 @@ contract C20 is StandardToken {
         controlWallet = controlWalletInput;
         whitelist[fundWallet] = true;
         whitelist[controlWallet] = true;
-        currentPrice = Price(priceNumeratorInput, 1000); // 1 token = 1 usd at ICO start
+        currentPrice = Price(priceNumeratorInput, 1000);
         fundingStartBlock = startBlockInput;
         fundingEndBlock = endBlockInput;
         previousUpdateTime = block.timestamp;
     }
 
-    // METHODS
+
 
     function setVestingContract(address vestingContractInput) external onlyFundWallet {
         require(vestingContractInput != address(0));
@@ -129,13 +129,13 @@ contract C20 is StandardToken {
         vestingSet = true;
     }
 
-    // allows controlWallet to update the price within a time contstraint, allows fundWallet complete control
+
     function updatePrice(uint256 newNumerator) external onlyManagingWallets {
         require(newNumerator > 0);
         require_limited_change(newNumerator);
-        // either controlWallet command is compliant or transaction came from fundWallet
+
         currentPrice.numerator = newNumerator;
-        // maps time to new Price (if not during ICO)
+
         prices[previousUpdateTime] = currentPrice;
         previousUpdateTime = block.timestamp;
         emit PriceUpdate(newNumerator, currentPrice.denominator);
@@ -151,7 +151,7 @@ contract C20 is StandardToken {
         uint256 percentage_diff = 0;
         percentage_diff = safeMul(newNumerator, 100) / currentPrice.numerator;
         percentage_diff = safeSub(percentage_diff, 100);
-        // controlWallet can only increase price by max 20% and only every waitTime
+
         require(percentage_diff <= 20);
     }
 
@@ -159,7 +159,7 @@ contract C20 is StandardToken {
         require(block.number > fundingEndBlock);
         require(newDenominator > 0);
         currentPrice.denominator = newDenominator;
-        // maps time to new Price
+
         prices[previousUpdateTime] = currentPrice;
         previousUpdateTime = block.timestamp;
         emit PriceUpdate(currentPrice.numerator, newDenominator);
@@ -167,12 +167,12 @@ contract C20 is StandardToken {
 
     function allocateTokens(address participant, uint256 amountTokens) private {
         require(vestingSet);
-        // 13% of total allocated for PR, Marketing, Team, Advisors
+
         uint256 developmentAllocation = safeMul(amountTokens, 14942528735632185) / 100000000000000000;
-        // check that token cap is not exceeded
+
         uint256 newTokens = safeAdd(amountTokens, developmentAllocation);
         require(safeAdd(totalSupply, newTokens) <= tokenCap);
-        // increase token supply, assign tokens to participant
+
         totalSupply = safeAdd(totalSupply, newTokens);
         balances[participant] = safeAdd(balances[participant], amountTokens);
         balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
@@ -181,7 +181,7 @@ contract C20 is StandardToken {
     function allocatePresaleTokens(address participant, uint amountTokens) external onlyFundWallet {
         require(block.number < fundingEndBlock);
         require(participant != address(0));
-        whitelist[participant] = true; // automatically whitelist accepted presale
+        whitelist[participant] = true;
         allocateTokens(participant, amountTokens);
         emit Whitelist(participant);
         emit AllocatePresale(participant, amountTokens);
@@ -204,18 +204,18 @@ contract C20 is StandardToken {
         uint256 icoDenominator = icoDenominatorPrice();
         uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator) / icoDenominator;
         allocateTokens(participant, tokensToBuy);
-        // send ether to fundWallet
+
         fundWallet.transfer(msg.value);
         emit Buy(msg.sender, participant, msg.value, tokensToBuy);
     }
 
-    // time based on blocknumbers, assuming a blocktime of 30s
+
     function icoDenominatorPrice() public view returns (uint256) {
         uint256 icoDuration = safeSub(block.number, fundingStartBlock);
         uint256 denominator;
-        if (icoDuration < 2880) { // #blocks = 24*60*60/30 = 2880
+        if (icoDuration < 2880) {
             return currentPrice.denominator;
-        } else if (icoDuration < 80640 ) { // #blocks = 4*7*24*60*60/30 = 80640
+        } else if (icoDuration < 80640 ) {
             denominator = safeMul(currentPrice.denominator, 105) / 100;
             return denominator;
         } else {
@@ -229,7 +229,7 @@ contract C20 is StandardToken {
         require(amountTokensToWithdraw > 0);
         address payable participant = msg.sender;
         require(balanceOf(participant) >= amountTokensToWithdraw);
-        require(withdrawals[participant].tokens == 0); // participant cannot have outstanding withdrawals
+        require(withdrawals[participant].tokens == 0);
         balances[participant] = safeSub(balances[participant], amountTokensToWithdraw);
         withdrawals[participant] = Withdrawal({tokens: amountTokensToWithdraw, time: previousUpdateTime});
         emit WithdrawRequest(participant, amountTokensToWithdraw);
@@ -238,13 +238,13 @@ contract C20 is StandardToken {
     function withdraw() external {
         address payable participant = payable(msg.sender);
         uint256 tokens = withdrawals[participant].tokens;
-        require(tokens > 0); // participant must have requested a withdrawal
+        require(tokens > 0);
         uint256 requestTime = withdrawals[participant].time;
-        // obtain the next price that was set after the request
+
         Price memory price = prices[requestTime];
-        require(price.numerator > 0); // price must have been set
+        require(price.numerator > 0);
         uint256 withdrawValue = safeMul(tokens, price.denominator) / price.numerator;
-        // if contract ethbal > then send + transfer tokens to fundWallet, otherwise give tokens back
+
         withdrawals[participant].tokens = 0;
         if (address(this).balance >= withdrawValue)
             enact_withdrawal_greater_equal(participant, withdrawValue, tokens);
@@ -252,20 +252,20 @@ contract C20 is StandardToken {
             enact_withdrawal_less(participant, withdrawValue, tokens);
     }
 
-    function enact_withdrawal_greater_equal(address payable participant, uint256 withdrawValue, uint256 tokens)
+    function enact_withdrawal_greater_equal(address participant, uint256 withdrawValue, uint256 tokens)
         private
     {
         assert(address(this).balance >= withdrawValue);
         balances[fundWallet] = safeAdd(balances[fundWallet], tokens);
-        participant.transfer(withdrawValue);
-        emit Withdraw(participant, tokens, withdrawValue);
+        payable(participant).transfer(withdrawValue);
+        emit Withdraw(payable(participant), tokens, withdrawValue);
     }
-    function enact_withdrawal_less(address payable participant, uint256 withdrawValue, uint256 tokens)
+    function enact_withdrawal_less(address participant, uint256 withdrawValue, uint256 tokens)
         private
     {
         assert(address(this).balance < withdrawValue);
-        balances[participant] = safeAdd(balances[participant], tokens);
-        emit Withdraw(participant, tokens, 0); // indicate a failed withdrawal
+        balances[payable(participant)] = safeAdd(balances[payable(participant)], tokens);
+        emit Withdraw(payable(participant), tokens, 0);
     }
 
 
@@ -277,22 +277,22 @@ contract C20 is StandardToken {
         return withdrawValue;
     }
 
-    // allow fundWallet or controlWallet to add ether to contract
+
     function addLiquidity() external onlyManagingWallets payable {
         require(msg.value > 0);
         emit AddLiquidity(msg.value);
     }
 
-    // allow fundWallet to remove ether from contract
+
     function removeLiquidity(uint256 amount) external onlyManagingWallets {
         require(amount <= address(this).balance);
         fundWallet.transfer(amount);
         emit RemoveLiquidity(amount);
     }
 
-    function changeFundWallet(address payable newFundWallet) external onlyFundWallet {
+    function changeFundWallet(address newFundWallet) external onlyFundWallet {
         require(newFundWallet != address(0));
-        fundWallet = newFundWallet;
+        fundWallet = payable(newFundWallet);
     }
 
     function changeControlWallet(address newControlWallet) external onlyFundWallet {
@@ -328,7 +328,7 @@ contract C20 is StandardToken {
         tradeable = true;
     }
 
-    // fallback function
+
     receive() external payable {
         require(tx.origin == msg.sender);
         buyTo(msg.sender);
@@ -343,7 +343,7 @@ contract C20 is StandardToken {
         token.transfer(fundWallet, balance);
      }
 
-    // prevent transfers until trading allowed
+
     function transfer(address _to, uint256 _value) public override isTradeable returns (bool success) {
         return super.transfer(_to, _value);
     }
