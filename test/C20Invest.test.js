@@ -13,9 +13,9 @@ describe("C20Invest", function(){
 
         var c20;
         var c20Vesting;
-        var c20Invest
+        var c20Invest;
 
-        beforeEach(async function(){
+        before(async function(){
             var totalSupply = 40656081;
             var fundWalletSupply = 9253488;
 
@@ -29,6 +29,7 @@ describe("C20Invest", function(){
 
             var currentPrice = await c20.currentPrice.call();
 
+            //console.log((await c20.previousUpdateTime.call()).toString());
             //console.log("ether balance before ICO purchase (fundWallet): ", web3.utils.fromWei(await web3.eth.getBalance(fundWallet)));
             //console.log("ether balance before ICO purchase (otherTokenHolders): ", web3.utils.fromWei(await web3.eth.getBalance(otherTokenHolders)));
             //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
@@ -62,9 +63,31 @@ describe("C20Invest", function(){
 
         });
 
-        it("should have owner as fundWallet", async function(){
-            var owners = await c20Invest.getOwners.call();
-            expect(owners).to.be.eql([fundWallet]);
-        });
+        it(
+            "should have owner as fundWallet",
+            async function(){
+                var owners = await c20Invest.getOwners.call();
+                expect(owners).to.be.eql([fundWallet]);
+            }
+        );
+
+        it(
+            "should receive user's money, correctly record balance and request time",
+            async function(){
+                await c20Invest.send(1e18, {from: user1});
+                var etherBalance = (await c20Invest.userBalances.call(user1)).toString();
+                var requestTime = (await c20Invest.requestTime.call(user1)).toNumber();
+                expect(etherBalance).to.be.equal("1000000000000000000")
+                expect(requestTime).to.be.at.most((await time.latest()).toNumber());
+                expect(requestTime).to.be.at.least((await time.latest()).toNumber() - 10);
+            }
+        );
+
+        it(
+            "prevents withdrawal if price has not been updated",
+            async function(){
+
+            }
+        );
     }
 );

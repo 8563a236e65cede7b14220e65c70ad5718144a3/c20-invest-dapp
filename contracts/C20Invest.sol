@@ -9,8 +9,8 @@ contract C20Invest is Ownable {
     C20 c20;
 
     uint MIN_INVESTMENT = 0.1 ether;
-    mapping (address => uint) private userBalances;
-    mapping (address => uint) private requestTime;
+    mapping (address => uint) public userBalances;
+    mapping (address => uint) public requestTime;
     
     constructor (address[] memory owners, address payable c20Address)
     Ownable(owners) {
@@ -36,6 +36,7 @@ contract C20Invest is Ownable {
         userBalances[msg.sender] = 0;
         uint numTokens = 0;
         // TODO: implement pricing logic
+        c20.previousUpdateTime()
 
         c20.transferFrom(address(this), msg.sender, numTokens);
     }
