@@ -22,8 +22,8 @@ contract StandardToken is Token, SafeMath {
 
     // TODO: update tests to expect throw
     function transferFrom(address _from, address _to, uint256 _value) public override virtual onlyPayloadSize(3) returns (bool success) {
-        require(_to != address(0));
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
+        require(_to != address(0), "StandardToken: _to Zero Address");
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0, "StandardToken: allowance less than value");
         balances[_from] = safeSub(balances[_from], _value);
         balances[_to] = safeAdd(balances[_to], _value);
         allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);

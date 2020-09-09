@@ -92,5 +92,26 @@ describe("C20Invest", function(){
                 );
             }
         );
+
+        it(
+            "allows withdrawal after price updated",
+            async function(){
+                var currentPrice = await c20.currentPrice.call();
+                var previousUpdateTime = await c20.previousUpdateTime.call();
+                var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+
+                await c20.updatePrice(100000, {from: fundWallet});
+
+                await c20Invest.getTokens({from: user1});
+                var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
+                var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+                var expectedNumberTokens = new BN("100000000000000000000");
+
+                expect(userBalance).to.be.eql(expectedNumberTokens);
+                expect(contractBalance).to.be.eql(initialContractBalance.sub(expectedNumberTokens));
+
+            }
+        );
+
     }
 );

@@ -58,12 +58,12 @@ contract C20Invest is Ownable {
         numTokens = priceNumerator.mul(userBalances[msg.sender]).div(priceDenominator);
 
         if (numTokens > contractTokenBalance) {
-            refund = userBalances[msg.sender] - contractTokenBalance.mul(priceDenominator).div(priceNumerator);
+            refund = userBalances[msg.sender].sub(contractTokenBalance.mul(priceDenominator).div(priceNumerator));
             numTokens = contractTokenBalance;
         }
 
         userBalances[msg.sender] = 0;
-        c20Instance.transferFrom(address(this), msg.sender, numTokens);
+        c20Instance.transfer(msg.sender, numTokens);
         if (refund != 0) {
             msg.sender.transfer(refund);
         }
