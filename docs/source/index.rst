@@ -14,6 +14,7 @@ Welcome to C20 Invest Dapp's documentation!
    c20vesting.rst
    c20invest.rst
    ownable.rst
+   suspendable.rst
    proxy.rst
    standardtoken.rst
    safemath.rst
