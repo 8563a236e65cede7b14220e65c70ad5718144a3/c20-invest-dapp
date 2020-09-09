@@ -20,8 +20,8 @@ contract C20Invest is Ownable {
         c20Instance = C20(payable(c20Address));
     }
 
-    function setC20Address(address payable C20Address) public onlyOwner {
-        c20Instance = C20(C20Address);
+    function setC20Address(address C20Address) public onlyOwner {
+        c20Instance = C20(payable(C20Address));
     }
     
     function buy() public payable {
@@ -43,15 +43,30 @@ contract C20Invest is Ownable {
             "C20Invest: user has no ether for conversion"
         );
 
+        uint256 contractTokenBalance = c20Instance.balanceOf(address(this));
+
+        require(
+             contractTokenBalance > 0,
+            "C20Invest: no tokens left in this account"
+        );
+
         uint256 numTokens = 0;
         uint256 priceNumerator;
         uint256 priceDenominator;
+        uint256 refund = 0;
         (priceNumerator, priceDenominator) = c20Instance.currentPrice();
-        numTokens = priceNumerator.mul(userBalances[msg.sender]);
-        numTokens = numTokens.div(priceDenominator);
+        numTokens = priceNumerator.mul(userBalances[msg.sender]).div(priceDenominator);
+
+        if (numTokens > contractTokenBalance) {
+            refund = userBalances[msg.sender] - contractTokenBalance.mul(priceDenominator).div(priceNumerator);
+            numTokens = contractTokenBalance;
+        }
 
         userBalances[msg.sender] = 0;
         c20Instance.transferFrom(address(this), msg.sender, numTokens);
+        if (refund != 0) {
+            msg.sender.transfer(refund);
+        }
     }
 
     receive() external payable {

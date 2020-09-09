@@ -86,7 +86,10 @@ describe("C20Invest", function(){
         it(
             "prevents withdrawal if price has not been updated",
             async function(){
-
+                await expectRevert(
+                    c20Invest.getTokens({from: user1}),
+                    "C20Invest: price has not updated yet"
+                );
             }
         );
     }
