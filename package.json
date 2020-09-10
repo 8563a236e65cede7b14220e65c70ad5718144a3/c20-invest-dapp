@@ -23,6 +23,7 @@
     "@openzeppelin/test-environment": "^0.1.4",
     "@openzeppelin/test-helpers": "^0.5.6",
     "chai": "^4.2.0",
+    "coveralls": "^3.1.0",
     "eslint": "^7.7.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
@@ -33,17 +34,14 @@
     "ethereumjs-util": "^7.0.4",
     "ganache-cli": "^6.10.1",
     "ganache-core": "^2.11.2",
-    "mocha": "^8.1.2",
-    "solhint": "^3.2.0",
-    "solidity-coverage": "^0.7.10",
-    "coveralls": "^3.1.0",
     "js-doc": "^0.5.0",
     "jsdoc": "^3.6.5",
+    "mocha": "^8.1.2",
     "solc": "^0.4.26",
+    "solhint": "^3.2.0",
+    "solidity-coverage": "^0.7.10",
     "solidity-docgen": "^0.5.4",
     "truffle": "^5.1.42"
   },
-  "dependencies": {
-
-  }
+  "dependencies": {}
 }

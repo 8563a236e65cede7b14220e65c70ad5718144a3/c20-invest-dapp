@@ -55,7 +55,8 @@ RUN npm init --yes && npm install --save-dev \
     ganache-core                          \
     solhint                               \
     solidity-coverage                     \
-    jsdoc
+    jsdoc                                 \
+    ethereumjs-util
 
 # Install sphinx and solidity/javascript language
 # domain plugin for automatic document generation
