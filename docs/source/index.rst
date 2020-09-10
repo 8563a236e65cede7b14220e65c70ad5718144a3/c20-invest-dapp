@@ -15,7 +15,11 @@ Welcome to C20 Invest Dapp's documentation!
    c20invest.rst
    ownable.rst
    suspendable.rst
+   initializable.rst
    proxy.rst
+   upgradeableproxy.rst
+   transparentupgradeableproxy.rst
+   address.rst
    standardtoken.rst
    safemath.rst
    safemathnew.rst

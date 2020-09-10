@@ -7,9 +7,9 @@ import "./UpgradeableProxy.sol";
 /**
  * @dev This contract implements a proxy that is upgradeable by an admin.
  *
- * To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector
- * clashing], which can potentially be used in an attack, this contract uses the
- * https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two
+ * To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357,
+ * which can potentially be used in an attack, this contract uses the
+ * https://blog.openzeppelin.com/the-transparent-proxy-pattern/ . This pattern implies two
  * things that go hand in hand:
  *
  * 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if
@@ -64,7 +64,7 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
      * NOTE: Only the admin can call this function. See {ProxyAdmin-getProxyAdmin}.
      *
      * TIP: To get this value clients can read directly from the storage slot shown below (specified by EIP1967) using the
-     * https://eth.wiki/json-rpc/API#eth_getstorageat[`eth_getStorageAt`] RPC call.
+     * https://eth.wiki/json-rpc/API#eth_getstorageat RPC call.
      * `0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103`
      */
     function admin() external ifAdmin returns (address) {
@@ -77,7 +77,7 @@ contract TransparentUpgradeableProxy is UpgradeableProxy {
      * NOTE: Only the admin can call this function. See {ProxyAdmin-getProxyImplementation}.
      *
      * TIP: To get this value clients can read directly from the storage slot shown below (specified by EIP1967) using the
-     * https://eth.wiki/json-rpc/API#eth_getstorageat[`eth_getStorageAt`] RPC call.
+     * https://eth.wiki/json-rpc/API#eth_getstorageat RPC call.
      * `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`
      */
     function implementation() external ifAdmin returns (address) {
