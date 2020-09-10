@@ -37,7 +37,7 @@ WORKDIR c20-invest
 
 # Install development and testing dependencies
 RUN npm init --yes && npm install --save-dev \
-    -g --unsafe-perm=true --allow-root    \
+    --unsafe-perm=true --allow-root       \
     ganache-cli                           \
     truffle                               \
     @openzeppelin/test-environment        \
@@ -54,11 +54,12 @@ RUN npm init --yes && npm install --save-dev \
     ethereumjs-util                       \
     ganache-core                          \
     solhint                               \
-    solidity-coverage
+    solidity-coverage                     \
+    jsdoc
 
 # Install sphinx and solidity/javascript language
 # domain plugin for automatic document generation
-RUN pip install sphinx sphinxcontrib-soliditydomain sphinx-js
+RUN pip install sphinx sphinxcontrib-soliditydomain sphinx-js sphinx-rtd-theme
 
 # Copy over directories
 COPY contracts /c20-invest/contracts
@@ -70,9 +71,9 @@ COPY [                      \
     ".eslintrc",            \
     ".mocharc.js",          \
     "package.json",         \
-    "package-lock.json",    \
     ".solcover.js",         \
     ".solhint.json",        \
     "truffle-config.js",    \
+    "test-environment.config.js", \
     "/c20-invest/"          \
 ]
