@@ -9,7 +9,8 @@
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "test": "mocha --exit --recursive",
     "docker_setup": "scripts/docker_setup.sh",
-    "docker_interactive": "docker container run -it contract_tester"
+    "docker_interactive": "docker container run -it --mount type=bind,source=\"$(pwd)\"/run,target=/c20-invest-dapp contract_tester",
+    "save": "rm -rf ../c20-invest-dapp/* && cp -r . ../c20-invest-dapp && chmod -R 777 ../c20-invest-dapp/"
   },
   "repository": {
     "type": "git",
