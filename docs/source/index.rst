@@ -19,6 +19,7 @@ Welcome to C20 Invest Dapp's documentation!
    proxy.rst
    upgradeableproxy.rst
    transparentupgradeableproxy.rst
+   proxyadmin.rst
    address.rst
    standardtoken.rst
    safemath.rst
