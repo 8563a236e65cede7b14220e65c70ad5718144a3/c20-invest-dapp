@@ -4,7 +4,9 @@ pragma solidity ^0.7.0;
 import "./c20_base/C20.sol";
 import "./access/Ownable.sol";
 import "./math/SafeMathNew.sol";
-import "./utils/Suspendable.sol";
+import "./proxy/Initializable.sol";
+import "./access/OwnableInitializable.sol";
+import "./utils/SuspendableInitializable.sol";
 
 
 /// @title C20Invest Smart Contract
@@ -24,9 +26,11 @@ import "./utils/Suspendable.sol";
 /// (say after upgrade) will revert, whereas in the latter case, ether
 /// sent to this address will be lost.
 ///
-/// This contract is solely for unit tests. See C20InvestInitializable for
-/// the contract that will actually be deployed behind the proxy.
-contract C20Invest is Ownable, Suspendable {
+/// This version is the initializable version required for the proxy to
+/// function. The C20Invest contract is a non-initializable version of
+/// this for unit testing the implementation logic. The C20InvestInitializable
+/// contract is the one that is actually deployed.
+contract C20Invest is OwnableInitializable, SuspendableInitializable, Initializable {
     using SafeMathNew for uint256;
 
     /// @dev State variable for C20 instance
@@ -51,8 +55,11 @@ contract C20Invest is Ownable, Suspendable {
     /// @param c20Address The address of the currently active
     /// C20 smart contract. Required to initialize the C20
     /// instance
-    constructor (address[] memory owners, address c20Address)
-    Ownable(owners) {
+    function initialize (address[] memory owners, address c20Address)
+    public
+    initializer {
+        OwnableInitializable.initialize(owners);
+        SuspendableInitializable.initialize();
         c20Instance = C20(payable(c20Address));
     }
 

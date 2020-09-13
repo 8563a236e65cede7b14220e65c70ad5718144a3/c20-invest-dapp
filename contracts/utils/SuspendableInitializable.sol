@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.0;
 
+import "../proxy/Initializable.sol";
+
 /// @title Suspendable Base Contract
 /// @author Invictus Capital
 /// @notice Helper contract for suspend/resume functionality
@@ -15,9 +17,9 @@ pragma solidity ^0.7.0;
 /// The state of the contract can be controlled
 /// with the _suspend() and _resume() functions.
 ///
-/// This contract is not initializable and can only be used
-/// with contracts that are not behind a proxy.
-contract Suspendable {
+/// This contract is an initializable version for use with
+/// contracts that are behind a proxy.
+contract SuspendableInitializable is Initializable {
     /// @dev An enumeration for the state of the contract.
     enum State { Active, Suspended }
 
@@ -34,7 +36,7 @@ contract Suspendable {
 
     /// @dev Sets the contract state to active upon
     /// construction.
-    constructor () {
+    function initialize() internal initializer {
         _state = State.Active;
     }
 
