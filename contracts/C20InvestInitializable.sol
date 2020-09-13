@@ -30,7 +30,7 @@ import "./utils/SuspendableInitializable.sol";
 /// function. The C20Invest contract is a non-initializable version of
 /// this for unit testing the implementation logic. The C20InvestInitializable
 /// contract is the one that is actually deployed.
-contract C20Invest is OwnableInitializable, SuspendableInitializable, Initializable {
+contract C20InvestInitializable is Initializable, OwnableInitializable, SuspendableInitializable {
     using SafeMathNew for uint256;
 
     /// @dev State variable for C20 instance
