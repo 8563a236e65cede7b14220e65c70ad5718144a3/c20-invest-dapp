@@ -1,5 +1,5 @@
-Initializable Index
-===================
+Initializable
+=============
 
 .. toctree::
     c20investinitializable.rst
