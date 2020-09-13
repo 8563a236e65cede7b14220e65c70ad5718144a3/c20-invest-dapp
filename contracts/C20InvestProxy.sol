@@ -8,7 +8,14 @@ contract C20InvestProxy is TransparentUpgradeableProxy, Ownable {
 
     /// @dev Constructor to pass constructor arguments to base
     /// classes
-    constructor(address[] memory owners) Ownable(owners) {
+    constructor(
+        address _logic,
+        address _admin,
+        bytes memory _data,
+        address[] memory owners)
+    Ownable(owners)
+    TransparentUpgradeableProxy(_logic, _admin, _data)
+    public {
 
     }
 }
