@@ -10,21 +10,13 @@ Welcome to C20 Invest Dapp's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   c20.rst
-   c20vesting.rst
-   c20invest.rst
-   ownable.rst
-   suspendable.rst
-   initializable.rst
-   proxy.rst
-   upgradeableproxy.rst
-   transparentupgradeableproxy.rst
-   proxyadmin.rst
-   address.rst
-   standardtoken.rst
-   safemath.rst
-   safemathnew.rst
-   token.rst
+   main_index.rst
+   c20_base.rst
+   initializable_index.rst
+   proxy_index.rst
+   access_index.rst
+   math_index.rst
+   utils_index.rst
 
 Indices and tables
 ==================
