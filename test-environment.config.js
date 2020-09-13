@@ -1,6 +1,6 @@
 module.exports = {
     accounts: {
-        amount: 6,
+        amount: 10,
         ether: 105000
     }
 }
