@@ -9,7 +9,7 @@ const C20Invest = contract.fromArtifact("C20Invest");
 const C20Vesting = contract.fromArtifact("C20Vesting");
 
 describe("C20Invest", function(){
-        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, user1, user2, proxyAdminAddress, proxyAdminOwner] = accounts;
+        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, user1, user2] = accounts;
 
         var c20;
         var c20Vesting;
