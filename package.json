@@ -4,9 +4,10 @@
   "description": "Secure C20 investment contract",
   "scripts": {
     "docs": "scripts/docs.sh",
-    "lint": "npm run lint:js && npm run lint:sol",
+    "lint": "npm run lint:js && npm run lint:sol && npm run lint:slither",
     "lint:js": "eslint --ignore-path .gitignore .",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
+    "lint:slither": "slither .",
     "test": "mocha --exit --recursive",
     "docker_setup": "scripts/docker_setup.sh",
     "docker_interactive": "docker container run -it --mount type=bind,source=\"$(pwd)\"/run,target=/c20-invest-dapp contract_tester",

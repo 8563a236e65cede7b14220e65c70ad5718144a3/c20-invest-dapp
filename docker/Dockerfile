@@ -60,7 +60,7 @@ RUN npm init --yes && npm install --save-dev \
 
 # Install sphinx and solidity/javascript language
 # domain plugin for automatic document generation
-RUN pip install sphinx sphinxcontrib-soliditydomain sphinx-js sphinx-rtd-theme
+RUN pip install sphinx sphinxcontrib-soliditydomain sphinx-js sphinx-rtd-theme slither-analyzer
 
 # Copy over directories
 COPY contracts /c20-invest/contracts
