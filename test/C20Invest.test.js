@@ -1,5 +1,5 @@
 const { spawn } = require('child_process');
-const { accounts, defaultSender, contract, web3 } = require("@openzeppelin/test-environment");
+const { accounts, defaultSender, contract, web3, provider } = require("@openzeppelin/test-environment");
 const { balance, constants, expectEvent, expectRevert, ether, BN, time } = require("@openzeppelin/test-helpers");
 const { ZERO_ADDRESS } = constants;
 
@@ -10,12 +10,16 @@ const C20JSON = require('../build/contracts/C20.json');
 const C20Invest = contract.fromArtifact("C20Invest");
 const C20Vesting = contract.fromArtifact("C20Vesting");
 
+const forwardPrice = require("./ForwardPricing.js")
+
 describe("C20Invest", function(){
         const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, user1, user2] = accounts;
 
         var c20;
         var c20Vesting;
         var c20Invest;
+        var oracle;
+        var web3socket;
 
         before(async function(){
             var totalSupply = 40656081;
@@ -63,7 +67,22 @@ describe("C20Invest", function(){
             //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
             //console.log("token balance (c20Invest): ", web3.utils.fromWei((await c20.balanceOf.call(c20Invest.address)).toString()));
 
-            console.log(new web3.eth.Contract(C20JSON.abi, c20.address));
+
+
+            /*
+            oracle.events.PriceUpdate(async function(err, event) {
+                if (err) {
+                    console.error('Error on event', err)
+                    return
+                }
+                console.log(event);
+            });
+            */
+            //web3socket = new web3.providers.WebsocketProvider('ws://localhost:8545')
+            //console.log(await web3socket.connected)
+            //console.log(provider);
+
+            oracle = forwardPrice(c20);
 
         });
 
@@ -105,7 +124,7 @@ describe("C20Invest", function(){
                 var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
                 await c20.updatePrice(100000, {from: fundWallet});
-
+                console.log(await oracle.getPriceUpdate());
                 await c20Invest.getTokens({from: user1});
                 var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
                 var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
