@@ -1,3 +1,4 @@
+const { spawn } = require('child_process');
 const { accounts, defaultSender, contract, web3 } = require("@openzeppelin/test-environment");
 const { balance, constants, expectEvent, expectRevert, ether, BN, time } = require("@openzeppelin/test-helpers");
 const { ZERO_ADDRESS } = constants;
@@ -5,6 +6,7 @@ const { ZERO_ADDRESS } = constants;
 const { expect } = require("chai");
 
 const C20 = contract.fromArtifact("C20");
+const C20JSON = require('../build/contracts/C20.json');
 const C20Invest = contract.fromArtifact("C20Invest");
 const C20Vesting = contract.fromArtifact("C20Vesting");
 
@@ -60,6 +62,8 @@ describe("C20Invest", function(){
             await c20.transfer(c20Invest.address, ether(new BN(9253487)), {from: fundWallet});
             //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
             //console.log("token balance (c20Invest): ", web3.utils.fromWei((await c20.balanceOf.call(c20Invest.address)).toString()));
+
+            console.log(new web3.eth.Contract(C20JSON.abi, c20.address));
 
         });
 
