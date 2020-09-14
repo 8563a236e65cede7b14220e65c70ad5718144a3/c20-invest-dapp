@@ -35,6 +35,15 @@ contract C20InvestBase {
     /// @dev State variable for C20 instance
     C20 c20Instance;
 
+    /// @dev The previousUpdateTime in the C20 contract after a price
+    /// update has taken place
+    uint256 currentTime;
+
+    /// @dev A mapping to allow us to access the forward time and thus
+    /// the forward price of the transaction, given the time the buy
+    /// request was made
+    mapping (uint256 => uint256) forwardTimes;
+
     /// @dev The minimum investment a user is allowed to send
     uint256 MIN_INVESTMENT = 0.1 ether;
 
