@@ -137,7 +137,10 @@ describe("C20Invest", function(){
 
                 var user3BalanceInit = await getBal(user3);
 
-                var etherToSend = initialContractBalance.mul(currentPrice.denominator).div(currentPrice.numerator);
+                var etherToSend = initialContractBalance
+                                    .mul(currentPrice.denominator)
+                                    .div(currentPrice.numerator)
+                                    .add(new BN("1"));
                 var txReceipt = await c20Invest.send(etherToSend, {from: user3});
 
 
@@ -148,18 +151,26 @@ describe("C20Invest", function(){
 
                 var userBalance = new BN((await c20.balanceOf.call(user3)).toString());
                 var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
-                
+
+                var gasPrice = new BN(await web3.eth.getGasPrice());
+                var gasUsed = new BN(txReceipt.receipt.gasUsed + txReceipt2.receipt.gasUsed);
+                var expectedBalance = user3BalanceInit.sub(etherToSend)
+                                        .sub(gasPrice.mul(gasUsed))
+                                        .add(new BN("1"));
 
                 //console.log([initialContractBalance.toString(), contractBalance.toString(), userBalance.toString()]);
                 //console.log(await web3.eth.getBalance(user3))
                 var user3BalanceAfter = await getBal(user3);
-                console.log([user3BalanceInit.toString(), etherToSend.toString(), user3BalanceAfter.toString()])
                 expect(userBalance).to.be.eql(initialContractBalance);
                 expect(contractBalance).to.be.eql(new BN("0"));
-                console.log((await web3.eth.getGasPrice()))
-                console.log(txReceipt);
-                console.log(txReceipt2);
-
+                expect(user3BalanceAfter).to.be.eql(expectedBalance);
+                console.log({
+                    userBalance: userBalance.toString(),
+                    initialContractBalance: initialContractBalance.toString(),
+                    contractBalance: contractBalance.toString(),
+                    user3BalanceAfter: user3BalanceAfter.toString(),
+                    expectedBalance: expectedBalance.toString()
+                });
 
             }
         );
