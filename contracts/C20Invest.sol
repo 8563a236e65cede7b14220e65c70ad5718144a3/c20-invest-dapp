@@ -33,4 +33,13 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
         _setC20Address(c20Address);
     }
 
+    /// @dev Wrapper for _getTokens to suspend the contract if the
+    /// token balance goes to zero
+    function getTokens() external {
+        uint256 refund = _getTokens();
+        if(refund != 0) {
+           _suspend();
+        }
+    }
+
 }

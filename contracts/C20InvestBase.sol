@@ -88,10 +88,15 @@ contract C20InvestBase {
     /// A refund is also possible if the user had deposited more ether than
     /// tokens available in the smart contract. In this case, the remaining
     /// ether balance is transferred back to the user and the remainder of
-    /// tokens within this contract transferred to their account. The contract
+    /// tokens within this contract transferred to their account.
+    ///
+    /// This function should be wrapped in the inheriting contract with the
+    /// Suspendable mechanism. Upon refund the contract
     /// should then enter a suspended state until refilled with tokens and
     /// manually unsuspended.
-    function getTokens() external {
+    /// @return _refund Use this to check if there was a refund given, and
+    /// if there was, suspend the contract
+    function _getTokens() internal returns(uint256 _refund) {
 
         uint256 contractTokenBalance = c20Instance.balanceOf(address(this));
         uint256 numTokens = 0;
@@ -138,6 +143,7 @@ contract C20InvestBase {
         if (refund != 0) {
             msg.sender.transfer(refund);
         }
+        return refund;
     }
 
     /// @dev The receive function is triggered when ether is sent to the

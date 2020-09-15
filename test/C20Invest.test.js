@@ -127,7 +127,7 @@ describe("C20Invest", function(){
         );
 
         it(
-            "refunds when amount deposited exceeds available tokens",
+            "refunds when amount deposited exceeds available tokens and suspends contract",
             async function(){
 
                 var previousUpdateTime = await c20.previousUpdateTime.call();
@@ -161,17 +161,12 @@ describe("C20Invest", function(){
                 //console.log([initialContractBalance.toString(), contractBalance.toString(), userBalance.toString()]);
                 //console.log(await web3.eth.getBalance(user3))
                 var user3BalanceAfter = await getBal(user3);
+                var suspended = await c20Invest.isSuspended.call();
+
                 expect(userBalance).to.be.eql(initialContractBalance);
                 expect(contractBalance).to.be.eql(new BN("0"));
                 expect(user3BalanceAfter).to.be.eql(expectedBalance);
-                console.log({
-                    userBalance: userBalance.toString(),
-                    initialContractBalance: initialContractBalance.toString(),
-                    contractBalance: contractBalance.toString(),
-                    user3BalanceAfter: user3BalanceAfter.toString(),
-                    expectedBalance: expectedBalance.toString()
-                });
-
+                expect(suspended).to.be.equal(true);
             }
         );
 

@@ -38,6 +38,15 @@ contract Suspendable {
         _state = State.Active;
     }
 
+    /// @dev Convenience function to see if the contract is
+    /// suspended
+    /// @return suspended A boolean which is true if the contract is
+    /// in the Suspended state and false if the contract is in the
+    /// Active State
+    function isSuspended() public view returns(bool suspended) {
+        return _state == State.Suspended;
+    }
+
     /// @dev The function that suspends the contract. It
     /// is internal and so only can be used within smart
     /// contracts that inherit from it, and not called
