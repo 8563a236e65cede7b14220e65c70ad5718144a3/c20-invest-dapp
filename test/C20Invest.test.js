@@ -10,15 +10,12 @@ const C20JSON = require('../build/contracts/C20.json');
 const C20Invest = contract.fromArtifact("C20Invest");
 const C20Vesting = contract.fromArtifact("C20Vesting");
 
-const forwardPrice = require("./ForwardPricing.js")
-
 describe("C20Invest", function(){
         const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2] = accounts;
 
         var c20;
         var c20Vesting;
         var c20Invest;
-        var oracle;
         var web3socket;
 
         before(async function(){
@@ -68,11 +65,6 @@ describe("C20Invest", function(){
             //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
             //console.log("token balance (c20Invest): ", web3.utils.fromWei((await c20.balanceOf.call(c20Invest.address)).toString()));
 
-            oracle = forwardPrice(c20, c20Invest, oracleAddress);
-            await c20Invest.setOracleAddress(oracleAddress, {from: fundWallet});
-            //console.log("oracle address ", await c20Invest.getOracleAddress());
-            //console.log(oracleAddress);
-
         });
 
         it(
@@ -112,21 +104,7 @@ describe("C20Invest", function(){
                 var previousUpdateTime = await c20.previousUpdateTime.call();
                 var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
-                console.log("requestTime");
-                console.log((await c20Invest.requestTime.call(user1)).toNumber());
-                console.log("Before Price Update");
-                console.log((await c20.previousUpdateTime.call()).toNumber());
-                console.log((await c20Invest.currentTime.call()).toNumber());
                 await c20.updatePrice(100000, {from: fundWallet});
-                console.log("After Price Update");
-                console.log((await c20.previousUpdateTime.call()).toNumber());
-                console.log((await c20Invest.currentTime.call()).toNumber());
-                await oracle.getPriceUpdate();
-                console.log("After Oracle Update");
-                console.log((await c20.previousUpdateTime.call()).toNumber());
-                console.log((await c20Invest.currentTime.call()).toNumber());
-
-                //console.log((await c20Invest.getForwardPrice.call()));
 
                 await c20Invest.getTokens({from: user1});
                 var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
