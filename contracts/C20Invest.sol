@@ -22,6 +22,7 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
     constructor (address[] memory owners, address c20Address)
     Ownable(owners) {
         c20Instance = C20(payable(c20Address));
+        currentTime = c20Instance.previousUpdateTime();
     }
 
     /// @dev Allows changing the address of the C20 contract in the
@@ -30,5 +31,10 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
     /// C20 smart contract
     function setC20Address(address c20Address) public onlyOwner {
         _setC20Address(c20Address);
+    }
+
+    /// @dev Sets the oracle address.
+    function setOracleAddress(address _oracleAddress) public onlyOwner {
+        _setOracleAddress(_oracleAddress);
     }
 }

@@ -35,9 +35,13 @@ contract C20InvestBase {
     /// @dev State variable for C20 instance
     C20 c20Instance;
 
+    /// @dev Address of the external caller of _priceUpdate for access
+    /// control purposes
+    address private oracleAddress;
+
     /// @dev The previousUpdateTime in the C20 contract after a price
     /// update has taken place
-    uint256 currentTime;
+    uint256 public currentTime;
 
     /// @dev A mapping to allow us to access the forward time and thus
     /// the forward price of the transaction, given the time the buy
@@ -154,6 +158,42 @@ contract C20InvestBase {
         if (refund != 0) {
             msg.sender.transfer(refund);
         }
+    }
+
+    /// @dev Sets the oracle address. Should be wrapped in onlyOwner or
+    /// similar by the inheriting contract to restrict access.
+    function _setOracleAddress(address _oracleAddress) internal {
+        oracleAddress = _oracleAddress;
+    }
+
+    /// @dev Returns the current address for the oracle which calls
+    /// _priceUpdate
+    function getOracleAddress() public view returns (address) {
+        return oracleAddress;
+    }
+
+    /// @dev Modifier to restrict access so that only the registered
+    /// oracle address can call the marked function
+    modifier onlyOracle() {
+        require(msg.sender == oracleAddress);
+        _;
+    }
+
+    /// @dev Updates the forwardTimes mapping when a PriceUpdate event
+    /// is emitted from the C20 contract. The forward pricing mechanism
+    /// depends on this information.
+    function priceUpdate() public onlyOracle {
+        uint256 updateTime = c20Instance.previousUpdateTime();
+        forwardTimes[currentTime] = updateTime;
+        currentTime = updateTime;
+    }
+
+    function getForwardPrice() public view returns(uint256 numerator, uint256 denominator) {
+        return c20Instance.prices(forwardTimes[requestTime[msg.sender]]);
+    }
+
+    function getForwardTime(uint256 time) public view returns(uint256 forwardTime) {
+        return forwardTimes[time];
     }
 
     /// @dev The receive function is triggered when ether is sent to the
