@@ -10,8 +10,12 @@ const C20JSON = require('../build/contracts/C20.json');
 const C20Invest = contract.fromArtifact("C20Invest");
 const C20Vesting = contract.fromArtifact("C20Vesting");
 
+async function getBal(account) {
+    return new BN(await web3.eth.getBalance(account))
+}
+
 describe("C20Invest", function(){
-        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2] = accounts;
+        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2, user3] = accounts;
 
         var c20;
         var c20Vesting;
@@ -51,7 +55,6 @@ describe("C20Invest", function(){
         it(
             "does not allow amounts below minimum investment",
             async function(){
-                var owners = await c20Invest.getOwners.call();
                 await expectRevert(
                     c20Invest.send(0.01e18, {from: user1}),
                     "C20Invest: ether received below minimum investment"
@@ -63,7 +66,9 @@ describe("C20Invest", function(){
         it(
             "should receive user's money, correctly record balance and request time",
             async function(){
+
                 await c20Invest.send(1e18, {from: user1});
+
                 var etherBalance = (await c20Invest.userBalances.call(user1)).toString();
                 var requestTime = (await c20Invest.requestTime.call(user1)).toNumber();
                 expect(etherBalance).to.be.equal("1000000000000000000")
@@ -124,22 +129,37 @@ describe("C20Invest", function(){
         it(
             "refunds when amount deposited exceeds available tokens",
             async function(){
-                await c20Invest.send(ether("1"), {from: user2});
 
                 var previousUpdateTime = await c20.previousUpdateTime.call();
                 var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
+                var currentPrice = await c20.currentPrice.call()
+
+                var user3BalanceInit = await getBal(user3);
+
+                var etherToSend = initialContractBalance.mul(currentPrice.denominator).div(currentPrice.numerator);
+                var txReceipt = await c20Invest.send(etherToSend, {from: user3});
+
+
                 await time.increase(1);
                 await c20.updatePrice(100000, {from: fundWallet});
 
-                await c20Invest.getTokens({from: user2});
-                var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
-                var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
-                var expectedNumberTokens = new BN("100000000000000000000");
+                var txReceipt2 = await c20Invest.getTokens({from: user3});
 
-                console.log([initialContractBalance.toString(), contractBalance.toString()]);
-                expect(userBalance).to.be.eql(expectedNumberTokens);
-                expect(contractBalance).to.be.eql(initialContractBalance.sub(expectedNumberTokens));
+                var userBalance = new BN((await c20.balanceOf.call(user3)).toString());
+                var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+                
+
+                //console.log([initialContractBalance.toString(), contractBalance.toString(), userBalance.toString()]);
+                //console.log(await web3.eth.getBalance(user3))
+                var user3BalanceAfter = await getBal(user3);
+                console.log([user3BalanceInit.toString(), etherToSend.toString(), user3BalanceAfter.toString()])
+                expect(userBalance).to.be.eql(initialContractBalance);
+                expect(contractBalance).to.be.eql(new BN("0"));
+                console.log((await web3.eth.getGasPrice()))
+                console.log(txReceipt);
+                console.log(txReceipt2);
+
 
             }
         );
