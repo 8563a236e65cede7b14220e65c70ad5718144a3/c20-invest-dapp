@@ -23,48 +23,21 @@ describe("C20Invest", function(){
             var fundWalletSupply = 9253488;
 
             c20 = await C20.new(controlWallet, 300000, 0, 7, {from: fundWallet, gas: 5000000});
-            //console.log("...C20 spawned...");
             c20Vesting = await C20Vesting.new(c20.address, 7, {from: fundWallet});
-            //console.log("...C20 Vesting spawned...");
             await c20.setVestingContract(c20Vesting.address, {from: fundWallet});
-            //console.log("...C20 Vesting Address set...");
-            var vestingAddress = await c20.vestingContract.call();
-
-            var currentPrice = await c20.currentPrice.call();
-
-            //console.log((await c20.previousUpdateTime.call()).toString());
-            //console.log("ether balance before ICO purchase (fundWallet): ", web3.utils.fromWei(await web3.eth.getBalance(fundWallet)));
-            //console.log("ether balance before ICO purchase (otherTokenHolders): ", web3.utils.fromWei(await web3.eth.getBalance(otherTokenHolders)));
-            //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
-            //console.log("token balance (otherTokenHolders): ", web3.utils.fromWei((await c20.balanceOf.call(otherTokenHolders)).toString()));
 
             var fundWalletValueToSend = ether("30844.96");
             await c20.buy({from: fundWallet, value: fundWalletValueToSend});
-
 
             c20.verifyParticipant(otherTokenHolders, {from: fundWallet});
             var otherTokenHoldersValueToSend = ether("104675.31");
             await c20.buy({from: otherTokenHolders, value: otherTokenHoldersValueToSend});
 
-
-            //console.log("ether balance after ICO purchase (fundWallet): ", web3.utils.fromWei(await web3.eth.getBalance(fundWallet)));
-            //console.log("ether balance after ICO purchase (otherTokenHolders): ", web3.utils.fromWei(await web3.eth.getBalance(otherTokenHolders)));
-            //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
-            //console.log("token balance (otherTokenHolders): ", web3.utils.fromWei((await c20.balanceOf.call(otherTokenHolders)).toString()));
             await time.advanceBlock();
-            //console.log((await time.latestBlock()).toNumber());
-
-            //console.log("...C20 Invest spawned...");
             c20Invest = await C20Invest.new([fundWallet], c20.address);
 
-            //console.log("c20 Invest Address: ", c20Invest.address);
             await c20.enableTrading({from: fundWallet});
-            //console.log(await c20.tradeable.call());
-            //console.log(await c20.halted.call());
             await c20.transfer(c20Invest.address, ether(new BN(9253487)), {from: fundWallet});
-            //console.log("token balance (fundWallet): ", web3.utils.fromWei((await c20.balanceOf.call(fundWallet)).toString()));
-            //console.log("token balance (c20Invest): ", web3.utils.fromWei((await c20.balanceOf.call(c20Invest.address)).toString()));
-
         });
 
         it(
@@ -72,6 +45,18 @@ describe("C20Invest", function(){
             async function(){
                 var owners = await c20Invest.getOwners.call();
                 expect(owners).to.be.eql([fundWallet]);
+            }
+        );
+
+        it(
+            "does not allow amounts below minimum investment",
+            async function(){
+                var owners = await c20Invest.getOwners.call();
+                await expectRevert(
+                    c20Invest.send(0.01e18, {from: user1}),
+                    "C20Invest: ether received below minimum investment"
+                )
+
             }
         );
 
@@ -98,9 +83,18 @@ describe("C20Invest", function(){
         );
 
         it(
+            "prevents withdrawal if user has no balance",
+            async function(){
+                await expectRevert(
+                    c20Invest.getTokens({from: user2}),
+                    "C20Invest: user has no ether for conversion"
+                );
+            }
+        );
+
+        it(
             "allows withdrawal after price updated",
             async function(){
-                var currentPrice = await c20.currentPrice.call();
                 var previousUpdateTime = await c20.previousUpdateTime.call();
                 var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
@@ -116,6 +110,42 @@ describe("C20Invest", function(){
 
             }
         );
+
+        it(
+            "prevents second attempt at withdrawing tokens",
+            async function(){
+                await expectRevert(
+                    c20Invest.getTokens({from: user1}),
+                    "C20Invest: user has no ether for conversion"
+                );
+            }
+        );
+
+        it(
+            "refunds when amount deposited exceeds available tokens",
+            async function(){
+                await c20Invest.send(ether("1"), {from: user2});
+
+                var previousUpdateTime = await c20.previousUpdateTime.call();
+                var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+
+                await time.increase(1);
+                await c20.updatePrice(100000, {from: fundWallet});
+
+                await c20Invest.getTokens({from: user2});
+                var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
+                var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+                var expectedNumberTokens = new BN("100000000000000000000");
+
+                console.log([initialContractBalance.toString(), contractBalance.toString()]);
+                expect(userBalance).to.be.eql(expectedNumberTokens);
+                expect(contractBalance).to.be.eql(initialContractBalance.sub(expectedNumberTokens));
+
+            }
+        );
+
+
+
 
     }
 );

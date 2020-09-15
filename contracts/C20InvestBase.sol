@@ -77,9 +77,8 @@ contract C20InvestBase {
     ///
     /// We first check if the C20 price has been updated since the time
     /// the user last sent ether to the contract. We then see if the user
-    /// has a positive ether balance for conversion. We check that the
-    /// current C20 token balance of this contract is greater than zero and
-    /// then proceed with calculating the number of tokens.
+    /// has a positive ether balance for conversion.
+    /// We then proceed with calculating the number of tokens.
     ///
     /// The logic for the conversion of tokens is almost identical to the
     /// buyTo() function in the C20 smart contract. We multiply the user's
@@ -130,7 +129,7 @@ contract C20InvestBase {
         }
 
         // Zero balance to prevent reentrancy attacks
-        userBalances[msg.sender] = 0;
+        delete userBalances[msg.sender];
 
         // Perform token transfer
         c20Instance.transfer(msg.sender, numTokens);
