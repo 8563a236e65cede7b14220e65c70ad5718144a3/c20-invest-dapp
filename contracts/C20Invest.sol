@@ -8,7 +8,7 @@ import "./C20InvestBase.sol";
 /// @notice Base Contract for C20 resale
 /// @dev This version of the contract is used for unit tests and
 /// utilizes a constructor versus an initializer. It can be used
-/// to test whether errors result from the C20InvestBase code or
+/// to test whether errors result from the :sol:contract:`C20InvestBase` code or
 /// whether they are coming from the proxying of functions.
 /// This version tests the behaviour of the contract
 /// when it is not behind a proxy.
@@ -96,7 +96,7 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
     /// @dev Transfers all tokens within this account to the
     /// supplied address. The use case for this is upgrade to
     /// the next version of this contract. The tokens can be
-    /// send back to the fund wallet for transfer into the
+    /// sent back to the fund wallet for transfer into the
     /// updated contract
     /// @param to The address to transfer the tokens to
     function transferTokens(address to) public onlyOwner {

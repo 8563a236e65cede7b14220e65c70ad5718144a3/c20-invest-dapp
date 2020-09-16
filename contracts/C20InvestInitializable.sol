@@ -12,7 +12,7 @@ import "./utils/SuspendableInitializable.sol";
 /// @dev This version of the contract is used for deployment and
 /// utilizes an initializer versus a constructor. This will be
 /// the contract that actually sits behind the proxy. Any differences
-/// in unit tests between the C20Invest contract and this contract
+/// in unit tests between the :sol:contract:`C20Invest` contract and this contract
 /// can then be pinpointed to the proxy operations.
 ///
 /// The contract is :sol:contract:`OwnableInitializable` to restrict access to the administrative
@@ -102,7 +102,7 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
     /// @dev Transfers all tokens within this account to the
     /// supplied address. The use case for this is upgrade to
     /// the next version of this contract. The tokens can be
-    /// send back to the fund wallet for transfer into the
+    /// sent back to the fund wallet for transfer into the
     /// updated contract
     /// @param to The address to transfer the tokens to
     function transferTokens(address to) public onlyOwner {
