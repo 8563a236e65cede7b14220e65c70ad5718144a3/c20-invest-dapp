@@ -49,8 +49,13 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
     }
 
     /// @dev Wrapper for resume, marked with onlyOwner to restrict
-    /// access
+    /// access. We require a non-zero number of tokens to resume
+    /// allowing deposits again
     function resume() external onlyOwner {
+        require(
+            c20Instance.balanceOf(address(this)) > 0,
+            "C20Invest: cannot resume with zero token balance"
+        );
         _resume();
     }
 
