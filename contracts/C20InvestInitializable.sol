@@ -71,6 +71,27 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
         _buy();
     }
 
+    // @dev Helper function to get balance of ether in this contract
+    // @return balance The current ether balance within the contract
+    function getContractEtherBalance()
+    public
+    view
+    onlyOwner
+    returns (uint256 balance) {
+        return address(this).balance;
+    }
+
+    // @dev Allows owner to withdraw ether stored
+    // @param amount The amount to withdraw
+    function withdrawBalance(uint256 amount) public onlyOwner
+    {
+        require(
+            amount <= getContractEtherBalance(),
+            "C20Invest: amount greater than available balance"
+        );
+        msg.sender.transfer(amount);
+    }
+
     /// @dev The receive function is triggered when ether is sent to the
     /// contract. It is just a simple wrapper for buy().
     receive() external payable {

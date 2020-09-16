@@ -56,8 +56,6 @@ describe("C20InvestProxy", function(){
             c20Invest = await C20Invest.at(c20InvestProxy.address);
 
             await c20.transfer(c20Invest.address, ether(new BN(9253487)), {from: fundWallet});
-
-
         });
 
         describe("Ownership", function(){
@@ -228,7 +226,44 @@ describe("C20InvestProxy", function(){
             );
         });
 
+        describe("Admin", function(){
+            it(
+                "does not allow non-owner to withdraw ether from contract",
+                async function(){
+                    await expectRevert(
+                        c20Invest.withdrawBalance(ether("1"), { from: user1 }),
+                        "Ownable: caller is not the owner"
+                    );
+                }
+            );
 
+            it(
+                "allows owner to withdraw ether from contract and yields correct balance",
+                async function(){
+                    var initFundWalletBalance = await getBal(fundWallet);
+                    var txReceipt = await c20Invest.withdrawBalance(ether("1"), { from: fundWallet });
+                    var gasPrice = new BN(await web3.eth.getGasPrice());
+                    var expectedBalance = initFundWalletBalance
+                                            .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed))).
+                                            add(ether("1"));
+                    var finalFundWalletBalance = await getBal(fundWallet);
+
+                    expect(expectedBalance).to.be.eql(finalFundWalletBalance);
+                }
+            );
+
+            it(
+                "does not allow withdrawing more than contract balance",
+                async function(){
+                    var initFundWalletBalance = await getBal(fundWallet);
+                    await expectRevert(
+                        c20Invest.withdrawBalance(initFundWalletBalance.add(new BN("1")), { from: fundWallet }),
+                        "C20Invest: amount greater than available balance"
+                    );
+                }
+            );
+
+        });
 
     }
 );
