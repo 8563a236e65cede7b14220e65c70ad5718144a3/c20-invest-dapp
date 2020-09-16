@@ -61,8 +61,12 @@ contract C20InvestBase {
     /// @dev The main function called by receive(). Records the
     /// user's balance and the current C20 previousUpdateTime
     /// required for token conversion and forward pricing
-    /// mechanisms
-    function buy() public payable {
+    /// mechanisms.
+    ///
+    /// This function should be wrapped in the inheriting contract with the
+    /// onlyActive modifier to ensure users do not deposit more ether while
+    /// there are no tokens available in the contract.
+    function _buy() public payable {
         require(
             msg.value >= MIN_INVESTMENT,
             "C20Invest: ether received below minimum investment"
@@ -144,12 +148,6 @@ contract C20InvestBase {
             msg.sender.transfer(refund);
         }
         return refund;
-    }
-
-    /// @dev The receive function is triggered when ether is sent to the
-    /// contract. It is just a simple wrapper for buy()
-    receive() external payable {
-        buy();
     }
 
 }

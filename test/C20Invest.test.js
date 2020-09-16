@@ -59,7 +59,6 @@ describe("C20Invest", function(){
                     c20Invest.send(0.01e18, {from: user1}),
                     "C20Invest: ether received below minimum investment"
                 )
-
             }
         );
 
@@ -167,6 +166,27 @@ describe("C20Invest", function(){
                 expect(contractBalance).to.be.eql(new BN("0"));
                 expect(user3BalanceAfter).to.be.eql(expectedBalance);
                 expect(suspended).to.be.equal(true);
+            }
+        );
+
+        it(
+            "prevents buying while contract is suspended",
+            async function(){
+                await expectRevert(
+                    c20Invest.send(1e18, {from: user2}),
+                    "Suspendable: function only available while contract active"
+                )
+            }
+        );
+
+        it(
+            "successfully resumes contract from suspension",
+            async function(){
+                var suspended = await c20Invest.isSuspended.call();
+                expect(suspended).to.be.equal(true);
+                await c20Invest.resume({from: fundWallet});
+                suspended = await c20Invest.isSuspended.call();
+                expect(suspended).to.be.equal(false);
             }
         );
 

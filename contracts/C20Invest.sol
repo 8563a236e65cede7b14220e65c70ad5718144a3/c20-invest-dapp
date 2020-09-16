@@ -42,4 +42,28 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
         }
     }
 
+    /// @dev Wrapper for suspend, marked with onlyOwner to restrict
+    /// access
+    function suspend() external onlyOwner {
+        _suspend();
+    }
+
+    /// @dev Wrapper for resume, marked with onlyOwner to restrict
+    /// access
+    function resume() external onlyOwner {
+        _resume();
+    }
+
+    /// @dev Wrapper for _buy marked with onlyActive to limit usage
+    /// to only when the contract has tokens available
+    function buy() public payable onlyActive {
+        _buy();
+    }
+
+    /// @dev The receive function is triggered when ether is sent to the
+    /// contract. It is just a simple wrapper for buy().
+    receive() external payable {
+        buy();
+    }
+
 }
