@@ -12,10 +12,17 @@ import "./C20InvestBase.sol";
 /// whether they are coming from the proxying of functions.
 /// This version tests the behaviour of the contract
 /// when it is not behind a proxy.
+///
+/// The contract is :sol:contract:`Ownable` to restrict access to the administrative
+/// functions such as setC20Address and suspending the contract. The
+/// contract is also :sol:contract:`Suspendable` and favours suspension over selfdestruct()
+/// as in the former case a transaction sent to the contract address
+/// (say after upgrade) will revert, whereas in the latter case, ether
+/// sent to this address will be lost.
 contract C20Invest is C20InvestBase, Ownable, Suspendable {
     /// @dev Constructor for this contract
     /// @param owners An array of addresses that will be assigned
-    /// ownership of the contract. See :ref:Ownable for usage
+    /// ownership of the contract. See :ref:`Ownable` for usage
     /// @param c20Address The address of the currently active
     /// C20 smart contract. Required to initialize the C20
     /// instance

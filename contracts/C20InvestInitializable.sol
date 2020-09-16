@@ -14,10 +14,17 @@ import "./utils/SuspendableInitializable.sol";
 /// the contract that actually sits behind the proxy. Any differences
 /// in unit tests between the C20Invest contract and this contract
 /// can then be pinpointed to the proxy operations.
+///
+/// The contract is :sol:contract:`OwnableInitializable` to restrict access to the administrative
+/// functions such as setC20Address and suspending the contract. The
+/// contract is also :sol:contract:`SuspendableInitializable` and favours suspension over selfdestruct()
+/// as in the former case a transaction sent to the contract address
+/// (say after upgrade) will revert, whereas in the latter case, ether
+/// sent to this address will be lost.
 contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitializable, SuspendableInitializable {
     /// @dev Initializer for this contract
     /// @param owners An array of addresses that will be assigned
-    /// ownership of the contract. See :ref:Ownable for usage
+    /// ownership of the contract. See :ref:`Ownable` for usage
     /// @param c20Address The address of the currently active
     /// C20 smart contract. Required to initialize the C20
     /// instance

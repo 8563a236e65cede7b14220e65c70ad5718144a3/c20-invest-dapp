@@ -11,20 +11,14 @@ import "./utils/Suspendable.sol";
 /// @author Invictus Capital
 /// @notice Base Contract for C20 resale
 /// @dev A smart contract that acts as an exchange for the
-/// purchase of C20 tokens. The requirements are that we
+/// purchase of :sol:contract:`C20` tokens. The requirements are that we
 /// use forward pricing and that the contract is upgradeable.
 /// This contract represents the implementation logic for the
 /// token purchase and will be where transactions are forwarded to
 /// from the proxy contract.
 ///
-/// The contract is Ownable to restrict access to the administrative
-/// functions such as setC20Address and suspending the contract. The
-/// contract is also Suspendable and favours suspension over selfdestruct()
-/// as in the former case a transaction sent to the contract address
-/// (say after upgrade) will revert, whereas in the latter case, ether
-/// sent to this address will be lost.
-///
-/// This contract is the base contract that C20Invest and C20InvestInitializable
+/// This contract is the base contract that :sol:contract:`C20Invest`
+/// and :sol:contract:`C20InvestInitializable`
 /// inherit from, the only difference between the two being that the former has
 /// a constructor and the latter has an initializer.
 /// The underlying logic is kept in this contract so the difference between
@@ -84,10 +78,12 @@ contract C20InvestBase {
     /// has a positive ether balance for conversion.
     /// We then proceed with calculating the number of tokens.
     ///
-    /// The logic for the conversion of tokens is almost identical to the
-    /// buyTo() function in the C20 smart contract. We multiply the user's
-    /// ether balance by the C20's currentPrice numerator and divide by its
-    /// denominator (versus the C20 version that uses icoDenominator).
+    /// The logic for the conversion of tokens is almost identical to
+    /// the :sol:func:`buyTo` function in the C20 smart contract. We obtain the forward price
+    /// by accessing the prices mapping within the C20 contract, using the
+    /// user's requestTime as the key. We multiply the user's
+    /// ether balance by the extracted price's numerator and divide by its
+    /// denominator.
     ///
     /// A refund is also possible if the user had deposited more ether than
     /// tokens available in the smart contract. In this case, the remaining
