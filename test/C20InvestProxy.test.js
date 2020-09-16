@@ -263,6 +263,31 @@ describe("C20InvestProxy", function(){
                 }
             );
 
+            it(
+                "does not transfer out remaining token balance to nonowner",
+                async function(){
+                    await expectRevert(
+                        c20Invest.transferTokens(fundWallet, { from: user1 }),
+                        "Ownable: caller is not the owner"
+                    );
+                }
+            );
+
+            it(
+                "transfers out remaining token balance",
+                async function(){
+                    var initFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
+                    var initContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
+                    await c20Invest.transferTokens(fundWallet, { from: fundWallet });
+                    var finalFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
+                    var finalContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
+
+                    expect(finalFundWalletTokenBalance.toString())
+                        .to.be.eql(initFundWalletTokenBalance.add(initContractTokenBalance).toString());
+                    expect(finalContractTokenBalance.toString()).to.be.eql("0");
+                }
+            );
+
         });
 
     }

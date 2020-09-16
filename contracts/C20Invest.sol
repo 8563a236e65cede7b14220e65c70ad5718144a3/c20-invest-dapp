@@ -93,6 +93,18 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
         msg.sender.transfer(amount);
     }
 
+    /// @dev Transfers all tokens within this account to the
+    /// supplied address. The use case for this is upgrade to
+    /// the next version of this contract. The tokens can be
+    /// send back to the fund wallet for transfer into the
+    /// updated contract
+    /// @param to The address to transfer the tokens to
+    function transferTokens(address to) public onlyOwner {
+        uint256 tokenBalance = c20Instance.balanceOf(address(this));
+        require(tokenBalance > 0, "C20Invest: contract ha zero token balance");
+        c20Instance.transfer(to, tokenBalance);
+    }
+
     /// @dev The receive function is triggered when ether is sent to the
     /// contract. It is just a simple wrapper for buy().
     receive() external payable {
