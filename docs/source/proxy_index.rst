@@ -1,5 +1,5 @@
-Proxy
-=====
+Proxy Contracts
+===============
 .. toctree::
     initializable.rst
     proxy.rst

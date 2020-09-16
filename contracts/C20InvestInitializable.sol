@@ -71,8 +71,8 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
         _buy();
     }
 
-    // @dev Helper function to get balance of ether in this contract
-    // @return balance The current ether balance within the contract
+    /// @dev Helper function to get balance of ether in this contract
+    /// @return balance The current ether balance within the contract
     function getContractEtherBalance()
     public
     view
@@ -81,8 +81,8 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
         return address(this).balance;
     }
 
-    // @dev Allows owner to withdraw ether stored
-    // @param amount The amount to withdraw
+    /// @dev Allows owner to withdraw ether stored
+    /// @param amount The amount to withdraw in wei
     function withdrawBalance(uint256 amount) public onlyOwner
     {
         require(

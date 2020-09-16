@@ -2,12 +2,11 @@
 pragma solidity ^0.7.0;
 
 import "./proxy/TransparentUpgradeableProxy.sol";
-import "./access/Ownable.sol";
 
 contract C20InvestProxy is TransparentUpgradeableProxy {
 
-    /// @dev Constructor to pass constructor arguments to base
-    /// classes
+    /// @dev Pass constructor arguments to base
+    /// class
     constructor(
         address _logic,
         address _admin,
@@ -15,7 +14,6 @@ contract C20InvestProxy is TransparentUpgradeableProxy {
     ) TransparentUpgradeableProxy(_logic, _admin, _data) {
 
     }
-
 
 }
 

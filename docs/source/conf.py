@@ -32,6 +32,7 @@ autodoc_lookup_path = os.path.abspath('../../contracts')
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.coverage',
     'sphinx.ext.graphviz',
     'sphinx.ext.doctest',

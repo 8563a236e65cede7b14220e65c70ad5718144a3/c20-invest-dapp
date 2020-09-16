@@ -1,5 +1,5 @@
-Initializable
-=============
+Initializable Contracts
+=======================
 
 .. toctree::
     c20investinitializable.rst
