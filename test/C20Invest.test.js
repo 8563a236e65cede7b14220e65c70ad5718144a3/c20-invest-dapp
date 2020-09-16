@@ -1,4 +1,3 @@
-const { spawn } = require('child_process');
 const { accounts, defaultSender, contract, web3, provider } = require("@openzeppelin/test-environment");
 const { balance, constants, expectEvent, expectRevert, ether, BN, time } = require("@openzeppelin/test-helpers");
 const { ZERO_ADDRESS } = constants;

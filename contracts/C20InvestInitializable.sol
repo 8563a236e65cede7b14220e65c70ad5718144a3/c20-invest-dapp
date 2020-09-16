@@ -27,7 +27,9 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
         OwnableInitializable.initialize(owners);
         SuspendableInitializable.initialize();
         c20Instance = C20(payable(c20Address));
+        MIN_INVESTMENT = 0.1 ether;
     }
+
 
     /// @dev Allows changing the address of the C20 contract in the
     /// event of an upgrade
@@ -35,6 +37,44 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
     /// C20 smart contract
     function setC20Address(address c20Address) public onlyOwner {
         _setC20Address(c20Address);
+    }
+
+    /// @dev Wrapper for _getTokens to suspend the contract if the
+    /// token balance goes to zero
+    function getTokens() external {
+        uint256 refund = _getTokens();
+        if(refund != 0) {
+           _suspend();
+        }
+    }
+
+    /// @dev Wrapper for suspend, marked with onlyOwner to restrict
+    /// access
+    function suspend() external onlyOwner {
+        _suspend();
+    }
+
+    /// @dev Wrapper for resume, marked with onlyOwner to restrict
+    /// access. We require a non-zero number of tokens to resume
+    /// allowing deposits again
+    function resume() external onlyOwner {
+        require(
+            c20Instance.balanceOf(address(this)) > 0,
+            "C20Invest: cannot resume with zero token balance"
+        );
+        _resume();
+    }
+
+    /// @dev Wrapper for _buy marked with onlyActive to limit usage
+    /// to only when the contract has tokens available
+    function buy() public payable onlyActive {
+        _buy();
+    }
+
+    /// @dev The receive function is triggered when ether is sent to the
+    /// contract. It is just a simple wrapper for buy().
+    receive() external payable {
+        buy();
     }
 
 }
