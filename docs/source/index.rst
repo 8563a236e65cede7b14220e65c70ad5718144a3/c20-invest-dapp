@@ -86,6 +86,8 @@ host machine, run::
 
     npm run save
 
+This saves the work within the root project directory on the host machine, in a folder called run.
+
 Design Requirements
 -------------------
 

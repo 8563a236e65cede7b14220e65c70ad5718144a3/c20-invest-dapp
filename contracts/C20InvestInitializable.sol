@@ -75,7 +75,7 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
     /// @dev Wrapper for _buy marked with onlyActive to limit usage
     /// to only when the contract has tokens available
     function buy() public payable onlyActive {
-        _buy();
+        _buy(msg.sender, msg.value);
     }
 
     /// @dev Helper function to get balance of ether in this contract

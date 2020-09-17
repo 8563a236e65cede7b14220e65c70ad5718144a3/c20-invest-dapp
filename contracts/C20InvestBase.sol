@@ -60,13 +60,13 @@ contract C20InvestBase {
     /// This function should be wrapped in the inheriting contract with the
     /// onlyActive modifier to ensure users do not deposit more ether while
     /// there are no tokens available in the contract.
-    function _buy() public payable {
+    function _buy(address sender, uint256 amount) internal {
         require(
-            msg.value >= MIN_INVESTMENT,
+            amount >= MIN_INVESTMENT,
             "C20Invest: ether received below minimum investment"
         );
-        requestTime[msg.sender] = c20Instance.previousUpdateTime();
-        userBalances[msg.sender] += msg.value;
+        requestTime[sender] = c20Instance.previousUpdateTime();
+        userBalances[sender] += msg.value;
     }
 
     /// @dev Allows the user to redeem their tokens given the amount
