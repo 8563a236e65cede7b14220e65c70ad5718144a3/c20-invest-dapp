@@ -27,6 +27,18 @@ contract OwnableInitializable is Initializable {
     /// @dev Array of owner addresses
     address[] private _owners;
 
+    /// @dev Emitted when an owner is added. Does not emit during construction,
+    /// only when :sol:func:`addOwner` is called.
+    /// @param newOwner The address which was granted ownership
+    /// @param sender The owner which added the new owner
+    event OwnerAdded(address indexed newOwner, address indexed sender);
+
+    /// @dev Emitted when an owner is removed.
+    /// Only emitted when :sol:func:`removeOwner` is called.
+    /// @param owner The address which had its ownership revoked
+    /// @param sender The owner which triggered the removal request
+    event OwnerRemoved(address indexed owner, address indexed sender);
+
     /// @notice Constructor for Ownable
     /// @dev Pass an empty array to set the sole owner of the contract
     /// as the address which deployed the contract or a
@@ -122,6 +134,7 @@ contract OwnableInitializable is Initializable {
             "Ownable: owner already exists"
         );
         _owners.push(newOwner);
+        emit OwnerAdded(newOwner, msg.sender);
     }
 
     /// @notice Remove an address from owners list
@@ -152,6 +165,7 @@ contract OwnableInitializable is Initializable {
 
         _owners[uint(index)] = _owners[_owners.length -1];
         _owners.pop();
+        emit OwnerRemoved(owner, msg.sender);
     }
 
     /// @notice Revoke ownership of contract

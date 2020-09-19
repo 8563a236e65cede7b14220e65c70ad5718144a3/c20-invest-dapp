@@ -42,6 +42,22 @@ contract C20InvestBase {
     /// to decide when the tokens can be redeemed
     mapping (address => uint256) public requestTime;
 
+    /// @dev Emitted when a user has deposited ether into the contract
+    /// @param sender The account which sent the ether
+    /// @param amount The amount of ether that was sent
+    event EtherDeposited(address indexed sender, uint256 amount);
+
+    /// @dev Emitted when a user has converted deposited ether into C20 tokens
+    /// @param sender The account which sent the ether
+    /// @param amount The number of tokens the user gets after conversion
+    event TokensPurchased(address indexed sender, uint256 amount);
+
+    /// @dev Emitted when a refund occurs. This signals that the contract needs
+    /// to be refilled with tokens
+    /// @param sender The sender whose token conversion triggered the refund
+    /// @param amount The ether value of the refund
+    event RefundGiven(address indexed sender, uint256 amount);
+
     /// @dev Allows changing the address of the C20 contract in the
     /// event of an upgrade. The inheriting contract should wrap this
     /// function with onlyOwner to protect from it being called by
@@ -66,7 +82,8 @@ contract C20InvestBase {
             "C20Invest: ether received below minimum investment"
         );
         requestTime[sender] = c20Instance.previousUpdateTime();
-        userBalances[sender] += msg.value;
+        userBalances[sender] += amount;
+        emit EtherDeposited(sender, amount);
     }
 
     /// @dev Allows the user to redeem their tokens given the amount
@@ -139,9 +156,12 @@ contract C20InvestBase {
         // Perform token transfer
         c20Instance.transfer(msg.sender, numTokens);
 
+        emit TokensPurchased(msg.sender, numTokens);
+
         // Perform a refund if there is one
         if (refund != 0) {
             msg.sender.transfer(refund);
+            emit RefundGiven(msg.sender, refund);
         }
         return refund;
     }

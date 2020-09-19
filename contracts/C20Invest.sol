@@ -20,6 +20,14 @@ import "./C20InvestBase.sol";
 /// (say after upgrade) will revert, whereas in the latter case, ether
 /// sent to this address will be lost.
 contract C20Invest is C20InvestBase, Ownable, Suspendable {
+
+    /// @dev Emitted when all tokens are transferred out of this
+    /// contract
+    /// @param to The address that will receive the tokens
+    /// @param sender The account which triggered the transfer
+    /// @param amount The number of tokens transferred
+    event AllTokensTransferred(address indexed to, address indexed sender, uint256 amount);
+
     /// @dev Constructor for this contract
     /// @param owners An array of addresses that will be assigned
     /// ownership of the contract. See :ref:`Ownable` for usage
@@ -103,6 +111,7 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
         uint256 tokenBalance = c20Instance.balanceOf(address(this));
         require(tokenBalance > 0, "C20Invest: contract ha zero token balance");
         c20Instance.transfer(to, tokenBalance);
+        emit AllTokensTransferred(to, msg.sender, tokenBalance);
     }
 
     /// @dev The receive function is triggered when ether is sent to the

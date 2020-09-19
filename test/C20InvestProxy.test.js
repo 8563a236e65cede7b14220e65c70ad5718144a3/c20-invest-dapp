@@ -80,10 +80,15 @@ describe("C20InvestProxy", function(){
             );
 
             it(
-                "should receive user's money, correctly record balance and request time",
+                "should receive user's money, correctly record balance and request time and emits EtherDeposited",
                 async function(){
 
-                    await c20Invest.send(1e18, {from: user1});
+                    var receipt = await c20Invest.send(1e18, {from: user1});
+                    expectEvent(
+                        receipt,
+                        "EtherDeposited",
+                        { sender: user1, amount: ether("1") }
+                    );
 
                     var etherBalance = (await c20Invest.userBalances.call(user1)).toString();
                     var requestTime = (await c20Invest.requestTime.call(user1)).toNumber();
@@ -116,17 +121,25 @@ describe("C20InvestProxy", function(){
             );
 
             it(
-                "allows withdrawal after price updated",
+                "allows withdrawal after price updated and emits TokensPurchased",
                 async function(){
                     var previousUpdateTime = await c20.previousUpdateTime.call();
                     var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
                     await c20.updatePrice(100000, {from: fundWallet});
 
-                    await c20Invest.getTokens({from: user1});
+                    var receipt = await c20Invest.getTokens({from: user1});
+
+
                     var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
                     var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
                     var expectedNumberTokens = new BN("100000000000000000000");
+
+                    expectEvent(
+                        receipt,
+                        "TokensPurchased",
+                        { sender: user1, amount: expectedNumberTokens }
+                    );
 
                     expect(userBalance).to.be.eql(expectedNumberTokens);
                     expect(contractBalance).to.be.eql(initialContractBalance.sub(expectedNumberTokens));
@@ -145,7 +158,8 @@ describe("C20InvestProxy", function(){
             );
 
             it(
-                "refunds when amount deposited exceeds available tokens and suspends contract",
+                "refunds when amount deposited exceeds available tokens and suspends contract" +
+                "and emits TokensPurchased and RefundGiven",
                 async function(){
 
                     var previousUpdateTime = await c20.previousUpdateTime.call();
@@ -166,6 +180,18 @@ describe("C20InvestProxy", function(){
                     await c20.updatePrice(100000, {from: fundWallet});
 
                     var txReceipt2 = await c20Invest.getTokens({from: user3});
+
+                    expectEvent(
+                        txReceipt2,
+                        "TokensPurchased",
+                        { sender: user3, amount: initialContractBalance }
+                    );
+
+                    expectEvent(
+                        txReceipt2,
+                        "RefundGiven",
+                        { sender: user3, amount: new BN("1") }
+                    );
 
                     var userBalance = new BN((await c20.balanceOf.call(user3)).toString());
                     var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
