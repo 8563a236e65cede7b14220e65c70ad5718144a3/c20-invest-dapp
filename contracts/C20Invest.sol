@@ -120,4 +120,11 @@ contract C20Invest is C20InvestBase, Ownable, Suspendable {
         buy();
     }
 
+    //#########################################################################//
+    // Next versions' code and state variables should only go after here. Do   //
+    // not change any of the preceding code or inherited contract code. This   //
+    // will likely cause errors in the storage layout of the proxy. This       //
+    // should be observed even with the C20Invest contract in order to maintain//
+    // parity with unit tests                                                  //
+    //#########################################################################//
 }

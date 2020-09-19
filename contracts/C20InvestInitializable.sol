@@ -126,4 +126,12 @@ contract C20InvestInitializable is C20InvestBase, Initializable, OwnableInitiali
         buy();
     }
 
+    //#########################################################################//
+    // Next versions' code and state variables should only go after here. Do   //
+    // not change any of the preceding code or inherited contract code. This   //
+    // will likely cause errors in the storage layout of the proxy. This       //
+    // is vitally important for C20InvestInitializable as this is the contract //
+    // that is deployed behind the proxy.                                      //
+    //#########################################################################//
+
 }
