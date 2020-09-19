@@ -83,6 +83,20 @@ describe("Ownable", function(){
         );
 
         it(
+            "emits event on adding owner",
+            async function(){
+                var ownable = await Ownable.new([ owner1 ]);
+                var receipt = await ownable.addOwner(owner2, {from: owner1});
+                expectEvent(
+                    receipt,
+                    "OwnerAdded",
+                    { newOwner: owner2, sender: owner1 }
+                );
+
+            }
+        );
+
+        it(
             "prevents adding owner that already exists",
             async function(){
                 var ownable = await Ownable.new([ owner1, owner2 ]);
@@ -114,6 +128,20 @@ describe("Ownable", function(){
                 await ownable.removeOwner(owner2, {from: owner1});
                 var after_remove = await ownable.checkOwner(owner2);
                 expect([before_remove, after_remove]).to.eql([true, false]);
+            }
+        );
+
+        it(
+            "emits event on removing owner",
+            async function(){
+                var ownable = await Ownable.new([ owner1, owner2 ]);
+                var receipt = await ownable.removeOwner(owner2, {from: owner1});
+                expectEvent(
+                    receipt,
+                    "OwnerRemoved",
+                    { owner: owner2, sender: owner1 }
+                );
+
             }
         );
 
