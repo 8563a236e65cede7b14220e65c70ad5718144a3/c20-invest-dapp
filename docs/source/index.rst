@@ -70,7 +70,15 @@ project directory under docs/build/html/index.html
 Deployment
 ----------
 
-[TODO]
+Deployment to the local development blockchain is fairly easy::
+
+    npx truffle compile  # compile contracts
+    npx truffle develop  # enter development environment
+    migrate --reset      # deploy contracts, resetting network artifacts
+
+To deploy to Rinkeby::
+
+    [TODO]
 
 Quick Usage
 -----------
