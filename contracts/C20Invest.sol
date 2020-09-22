@@ -92,9 +92,8 @@ contract C20Invest is Initializable {
     /// required for token conversion and forward pricing
     /// mechanisms.
     ///
-    /// This function should be wrapped in the inheriting contract with the
-    /// onlyActive modifier to ensure users do not deposit more ether while
-    /// there are no tokens available in the contract.
+    /// This function is callable even when there are no tokens
+    /// within this contract.
     function buy() public payable {
         require(
             msg.value >= MIN_INVESTMENT,
@@ -123,14 +122,10 @@ contract C20Invest is Initializable {
     /// denominator.
     ///
     /// A refund is also possible if the user had deposited more ether than
-    /// tokens available in the smart contract. In this case, the remaining
+    /// tokens available in the smart contract. In this case, the entire
     /// ether balance is transferred back to the user and the remainder of
-    /// tokens within this contract transferred to their account.
-    ///
-    /// This function should be wrapped in the inheriting contract with the
-    /// Suspendable mechanism. Upon refund the contract
-    /// should then enter a suspended state until refilled with tokens and
-    /// manually unsuspended.
+    /// tokens within this contract is kept by the contract instead of being
+    /// transferred to the user.
     function getTokens() external {
 
         uint256 contractTokenBalance = c20Instance.balanceOf(address(this));

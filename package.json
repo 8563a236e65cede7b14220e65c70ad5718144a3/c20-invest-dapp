@@ -4,6 +4,9 @@
   "description": "Secure C20 investment contract",
   "scripts": {
     "docs": "scripts/docs.sh",
+    "setup:npm": "scripts/npm_setup.sh",
+    "setup:python": "scripts/docs_setup.sh",
+    "setup": "npm run setup:npm && npm run setup:python",
     "lint": "npm run lint:js && npm run lint:sol && npm run lint:slither",
     "lint:js": "eslint --ignore-path .gitignore .",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
@@ -19,28 +22,33 @@
   "author": "Invictus Capital",
   "license": "ISC",
   "devDependencies": {
-    "@openzeppelin/test-environment": "^0.1.4",
+    "@openzeppelin/test-environment": "^0.1.5",
     "@openzeppelin/test-helpers": "^0.5.6",
     "chai": "^4.2.0",
     "coveralls": "^3.1.0",
-    "eslint": "^7.7.0",
+    "eslint": "^7.9.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-mocha-no-only": "^1.1.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "ethereumjs-util": "^7.0.4",
-    "ganache-cli": "^6.10.1",
-    "ganache-core": "^2.11.2",
+    "ethereumjs-util": "^7.0.5",
+    "ganache-cli": "^6.10.2",
+    "ganache-core": "^2.11.3",
     "js-doc": "^0.5.0",
-    "jsdoc": "^3.6.5",
-    "mocha": "^8.1.2",
+    "jsdoc": "^3.6.6",
+    "mocha": "^8.1.3",
     "solc": "^0.4.26",
     "solhint": "^3.2.0",
     "solidity-coverage": "^0.7.10",
     "solidity-docgen": "^0.5.4",
-    "truffle": "^5.1.42"
+    "truffle": "^5.1.45"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "main": ".mocharc.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  }
 }
