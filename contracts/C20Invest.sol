@@ -25,7 +25,7 @@ contract C20Invest is Initializable {
     
     /// @dev Track unconverted ether to prevent accidental withdrawal
     /// by owner
-    uint256 unconvertedEther = 0;
+    uint256 public unconvertedEther = 0;
 
     /// @dev The minimum investment a user is allowed to send
     uint256 MIN_INVESTMENT;
@@ -182,7 +182,11 @@ contract C20Invest is Initializable {
     view
     onlyOwner
     returns (uint256 balance) {
-        return address(this).balance - unconvertedEther;
+        if(unconvertedEther > address(this).balance){
+            return 0;
+        } else {
+            return address(this).balance - unconvertedEther; 
+        }
     }
 
     /// @dev Allows owner to withdraw ether stored. Automatically

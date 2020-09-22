@@ -36,6 +36,7 @@
     "ethereumjs-util": "^7.0.5",
     "ganache-cli": "^6.10.2",
     "ganache-core": "^2.11.3",
+    "husky": "^4.3.0",
     "js-doc": "^0.5.0",
     "jsdoc": "^3.6.6",
     "mocha": "^8.1.3",

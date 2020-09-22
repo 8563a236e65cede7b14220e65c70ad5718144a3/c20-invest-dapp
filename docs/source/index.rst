@@ -139,64 +139,39 @@ Unit Test Results
 Current run::
 
    > c20-invest-dapp@0.1.0 test /media/Database/Documents/Solidity/c20-invest-dapp
-   > mocha --exit --recursive --ignore test/C20InvestProxy.test.js && mocha --exit test/C20InvestProxy.test.js
-     C20Invest
+   > mocha --exit --recursive
+     C20InvestProxy
        Ownership
          ✓ should have owner as fundWallet
        Sending Ether
-         ✓ does not allow amounts below minimum investment (84ms)
-         ✓ should receive user's money, correctly record balance and request time and emits EtherDeposited (106ms)
+         ✓ does not allow amounts below minimum investment (106ms)
+         ✓ should receive user's money, correctly record balance and request time and emits EtherDeposited (123ms)
        Getting Tokens
-         ✓ prevents withdrawal if price has not been updated (64ms)
-         ✓ prevents withdrawal if user has no balance (63ms)
-         ✓ allows withdrawal after price updated and emits TokensPurchased (229ms)
+         ✓ prevents withdrawal if price has not been updated (70ms)
+         ✓ prevents withdrawal if user has no balance (69ms)
+         ✓ allows withdrawal after price updated and emits TokensPurchased (211ms)
          ✓ prevents second attempt at withdrawing tokens (65ms)
-         ✓ refunds when amount deposited exceeds available tokens and suspends contractand emits TokensPurchased and RefundGiven (343ms)
-       Suspendable Operations
-         ✓ prevents buying while contract is suspended (48ms)
-         ✓ does not resume if contract token balance is zero (76ms)
-         ✓ successfully resumes contract from suspension (168ms)
+         ✓ refunds when amount deposited exceeds available tokens and emits RefundGiven (330ms)
        Admin
-         ✓ does not allow non-owner to withdraw ether from contract (55ms)
-         ✓ allows owner to withdraw ether from contract and yields correct balance (52ms)
-         ✓ does not allow withdrawing more than contract balance (59ms)
-         ✓ does not transfer out remaining token balance to nonowner (52ms)
-         ✓ transfers out remaining token balance (162ms)
-
-     Ownable
-       Constructor
-         ✓ initializes owner to msg.sender with empty array (78ms)
-         ✓ initializes owner to given addresses with non-empty array (73ms)
-       Check Ownership
-         ✓ checks existing owner address found in _owners array (72ms)
-         ✓ checks non-owner address not found in _owners array (67ms)
-         ✓ finds correct indices of owners (100ms)
-         ✓ returns -1 if address is not an owner (75ms)
-       Add Owner
-         ✓ adds a new owner (106ms)
-         ✓ emits event on adding owner (85ms)
-         ✓ prevents adding owner that already exists (100ms)
-         ✓ prevents non-owners from adding new owners (91ms)
-       Remove Owner
-         ✓ removes owner correctly (145ms)
-         ✓ emits event on removing owner (99ms)
-         ✓ prevents non-owner from removing (88ms)
-         ✓ prevents removal when only one owner (82ms)
-         ✓ revokes ownership correctly (142ms)
-       Transfer Ownership
-         ✓ adds new owner and removes old (146ms)
-
+         ✓ does not allow non-owner to withdraw ether from contract (51ms)
+         ✓ allows owner to withdraw ether from contract and yields correct balance (65ms)
+         ✓ does not allow withdrawing more than contract balance (264ms)
+         ✓ does not allow withdrawing unconverted ether (110ms)
+         ✓ allows withdrawing everything but unconverted ether (61ms)
+         ✓ does not transfer out remaining token balance to nonowner (46ms)
+         ✓ transfers out remaining token balance (121ms)
+   
      SafeMath
        add
-         ✓ adds correctly
+         ✓ adds correctly (40ms)
          ✓ reverts on addition overflow (43ms)
        sub
          ✓ subtracts correctly
          ✓ reverts if subtraction result would be negative
        mul
-         ✓ multiplies correctly (39ms)
+         ✓ multiplies correctly (45ms)
          ✓ multiplies by zero correctly
-         ✓ reverts on multiplication overflow (45ms)
+         ✓ reverts on multiplication overflow (46ms)
        div
          ✓ divides correctly
          ✓ divides zero correctly
@@ -209,14 +184,14 @@ Current run::
            ✓ when the dividend is equal to the divisor
            ✓ when the dividend is larger than the divisor
            ✓ when the dividend is a multiple of the divisor
-
+   
      Initializable
        basic testing without inheritance
          before initialize
            ✓ initializer has not run
          after initialize
            ✓ initializer has run
-           ✓ initializer does not run again
+           ✓ initializer does not run again (42ms)
          after nested initialize
            ✓ initializer has run
        complex testing with inheritance
@@ -225,32 +200,32 @@ Current run::
          ✓ initializes gramps
          ✓ initializes father
          ✓ initializes child
-
+   
      ProxyAdmin
        ✓ has an owner
        #getProxyAdmin
          ✓ returns proxyAdmin as admin of the proxy
        #changeProxyAdmin
-         ✓ fails to change proxy admin if its not the proxy owner
-         ✓ changes proxy admin (55ms)
+         ✓ fails to change proxy admin if its not the proxy owner (42ms)
+         ✓ changes proxy admin (72ms)
        #getProxyImplementation
          ✓ returns proxy implementation address
        #upgrade
          with unauthorized account
-           ✓ fails to upgrade
+           ✓ fails to upgrade (43ms)
          with authorized account
-           ✓ upgrades implementation (61ms)
+           ✓ upgrades implementation (73ms)
        #upgradeAndCall
          with unauthorized account
-           ✓ fails to upgrade (55ms)
+           ✓ fails to upgrade (48ms)
          with authorized account
            with invalid callData
-             ✓ fails to upgrade (60ms)
+             ✓ fails to upgrade (50ms)
            with valid callData
-             ✓ upgrades implementation (63ms)
-
+             ✓ upgrades implementation (67ms)
+   
      TransparentUpgradeableProxy
-       ✓ cannot be initialized with a non-contract address (44ms)
+       ✓ cannot be initialized with a non-contract address (52ms)
        without initialization
          when not sending balance
            ✓ sets the implementation address
@@ -267,114 +242,7 @@ Current run::
              ✓ initializes the proxy
              ✓ has expected balance
            when sending some balance
-             ✓ reverts (60ms)
-         payable
-           when not sending balance
-             ✓ sets the implementation address
-             ✓ initializes the proxy
-             ✓ has expected balance
-           when sending some balance
-             ✓ sets the implementation address
-             ✓ initializes the proxy
-             ✓ has expected balance
-       initialization with parameters
-         non payable
-           when not sending balance
-             ✓ sets the implementation address
-             ✓ initializes the proxy
-             ✓ has expected balance
-           when sending some balance
-             ✓ reverts (48ms)
-         payable
-           when not sending balance
-             ✓ sets the implementation address
-             ✓ initializes the proxy
-             ✓ has expected balance
-           when sending some balance
-             ✓ sets the implementation address
-             ✓ initializes the proxy
-             ✓ has expected balance
-       implementation
-         ✓ returns the current implementation address
-         ✓ delegates to the implementation
-       upgradeTo
-         when the sender is the admin
-           when the given implementation is different from the current one
-             ✓ upgrades to the requested implementation (55ms)
-             ✓ emits an event
-           when the given implementation is the zero address
              ✓ reverts (46ms)
-         when the sender is not the admin
-           ✓ reverts (39ms)
-       upgradeToAndCall
-         without migrations
-           when the call does not fail
-             when the sender is the admin
-               ✓ upgrades to the requested implementation
-               ✓ emits an event
-               ✓ calls the initializer function
-               ✓ sends given value to the proxy
-               - uses the storage of the proxy
-             when the sender is not the admin
-               ✓ reverts (39ms)
-           when the call does fail
-             ✓ reverts (49ms)
-         with migrations
-           when the sender is the admin
-             when upgrading to V1
-               ✓ upgrades to the requested version and emits an event
-               ✓ calls the 'initialize' function and sends given value to the proxy
-               when upgrading to V2
-                 ✓ upgrades to the requested version and emits an event
-                 ✓ calls the 'migrate' function and sends given value to the proxy (44ms)
-                 when upgrading to V3
-                   ✓ upgrades to the requested version and emits an event
-                   ✓ calls the 'migrate' function and sends given value to the proxy (49ms)
-           when the sender is not the admin
-             ✓ reverts (74ms)
-       changeAdmin
-         when the new proposed admin is not the zero address
-           when the sender is the admin
-             ✓ assigns new proxy admin
-             ✓ emits an event
-           when the sender is not the admin
-             ✓ reverts
-         when the new proposed admin is the zero address
-           ✓ reverts
-       storage
-         ✓ should store the implementation address in specified location
-         ✓ should store the admin proxy in specified location
-       transparent proxy
-         ✓ proxy admin cannot call delegated functions
-         when function names clash
-           ✓ when sender is proxy admin should run the proxy function
-           ✓ when sender is other should delegate to implementation
-       regression
-         ✓ should add new function (207ms)
-         ✓ should remove function (232ms)
-         ✓ should change function signature (204ms)
-         ✓ should add fallback function (206ms)
-         ✓ should remove fallback function (178ms)
-
-     UpgradeableProxy
-       ✓ cannot be initialized with a non-contract address (44ms)
-       without initialization
-         when not sending balance
-           ✓ sets the implementation address
-           ✓ initializes the proxy
-           ✓ has expected balance
-         when sending some balance
-           ✓ sets the implementation address
-           ✓ initializes the proxy
-           ✓ has expected balance
-       initialization without parameters
-         non payable
-           when not sending balance
-             ✓ sets the implementation address
-             ✓ initializes the proxy
-             ✓ has expected balance
-           when sending some balance
-             ✓ reverts (45ms)
          payable
            when not sending balance
              ✓ sets the implementation address
@@ -401,83 +269,150 @@ Current run::
              ✓ sets the implementation address
              ✓ initializes the proxy
              ✓ has expected balance
-
+       implementation
+         ✓ returns the current implementation address
+         ✓ delegates to the implementation
+       upgradeTo
+         when the sender is the admin
+           when the given implementation is different from the current one
+             ✓ upgrades to the requested implementation (56ms)
+             ✓ emits an event (40ms)
+           when the given implementation is the zero address
+             ✓ reverts
+         when the sender is not the admin
+           ✓ reverts (39ms)
+       upgradeToAndCall
+         without migrations
+           when the call does not fail
+             when the sender is the admin
+               ✓ upgrades to the requested implementation
+               ✓ emits an event
+               ✓ calls the initializer function
+               ✓ sends given value to the proxy
+               - uses the storage of the proxy
+             when the sender is not the admin
+               ✓ reverts (42ms)
+           when the call does fail
+             ✓ reverts (43ms)
+         with migrations
+           when the sender is the admin
+             when upgrading to V1
+               ✓ upgrades to the requested version and emits an event
+               ✓ calls the 'initialize' function and sends given value to the proxy
+               when upgrading to V2
+                 ✓ upgrades to the requested version and emits an event
+                 ✓ calls the 'migrate' function and sends given value to the proxy (43ms)
+                 when upgrading to V3
+                   ✓ upgrades to the requested version and emits an event
+                   ✓ calls the 'migrate' function and sends given value to the proxy (40ms)
+           when the sender is not the admin
+             ✓ reverts (86ms)
+       changeAdmin
+         when the new proposed admin is not the zero address
+           when the sender is the admin
+             ✓ assigns new proxy admin
+             ✓ emits an event
+           when the sender is not the admin
+             ✓ reverts
+         when the new proposed admin is the zero address
+           ✓ reverts (45ms)
+       storage
+         ✓ should store the implementation address in specified location
+         ✓ should store the admin proxy in specified location
+       transparent proxy
+         ✓ proxy admin cannot call delegated functions
+         when function names clash
+           ✓ when sender is proxy admin should run the proxy function
+           ✓ when sender is other should delegate to implementation
+       regression
+         ✓ should add new function (200ms)
+         ✓ should remove function (234ms)
+         ✓ should change function signature (187ms)
+         ✓ should add fallback function (196ms)
+         ✓ should remove fallback function (199ms)
+   
+     UpgradeableProxy
+       ✓ cannot be initialized with a non-contract address (40ms)
+       without initialization
+         when not sending balance
+           ✓ sets the implementation address
+           ✓ initializes the proxy
+           ✓ has expected balance
+         when sending some balance
+           ✓ sets the implementation address
+           ✓ initializes the proxy
+           ✓ has expected balance
+       initialization without parameters
+         non payable
+           when not sending balance
+             ✓ sets the implementation address
+             ✓ initializes the proxy
+             ✓ has expected balance
+           when sending some balance
+             ✓ reverts (42ms)
+         payable
+           when not sending balance
+             ✓ sets the implementation address
+             ✓ initializes the proxy
+             ✓ has expected balance
+           when sending some balance
+             ✓ sets the implementation address
+             ✓ initializes the proxy
+             ✓ has expected balance
+       initialization with parameters
+         non payable
+           when not sending balance
+             ✓ sets the implementation address
+             ✓ initializes the proxy
+             ✓ has expected balance
+           when sending some balance
+             ✓ reverts (42ms)
+         payable
+           when not sending balance
+             ✓ sets the implementation address
+             ✓ initializes the proxy
+             ✓ has expected balance
+           when sending some balance
+             ✓ sets the implementation address
+             ✓ initializes the proxy
+             ✓ has expected balance
+   
      Address
        isContract
          ✓ returns false for account address
-         ✓ returns true for contract address (52ms)
+         ✓ returns true for contract address (57ms)
        sendValue
          when sender contract has no funds
-           ✓ sends 0 wei
-           ✓ reverts when sending non-zero amounts
+           ✓ sends 0 wei (42ms)
+           ✓ reverts when sending non-zero amounts (38ms)
          when sender contract has funds
-           ✓ sends 0 wei
-           ✓ sends non-zero amounts (39ms)
-           ✓ sends the whole balance
+           ✓ sends 0 wei (39ms)
+           ✓ sends non-zero amounts
+           ✓ sends the whole balance (41ms)
            ✓ reverts when sending more than the balance
            with contract recipient
-             ✓ sends funds (64ms)
-             ✓ reverts on recipient revert (75ms)
+             ✓ sends funds (66ms)
+             ✓ reverts on recipient revert (69ms)
        functionCall
          with valid contract receiver
-           ✓ calls the requested function (49ms)
-           ✓ reverts when the called function reverts with no reason (40ms)
-           ✓ reverts when the called function reverts, bubbling up the revert reason
-           ✓ reverts when the called function runs out of gas (1270ms)
-           ✓ reverts when the called function throws
-           ✓ reverts when function does not exist (39ms)
+           ✓ calls the requested function (58ms)
+           ✓ reverts when the called function reverts with no reason
+           ✓ reverts when the called function reverts, bubbling up the revert reason (42ms)
+           ✓ reverts when the called function runs out of gas (1173ms)
+           ✓ reverts when the called function throws (55ms)
+           ✓ reverts when function does not exist (57ms)
          with non-contract receiver
            ✓ reverts when address is not a contract
        functionCallWithValue
          with zero value
-           ✓ calls the requested function (48ms)
+           ✓ calls the requested function (41ms)
          with non-zero value
            ✓ reverts if insufficient sender balance
-           ✓ calls the requested function with existing value (80ms)
-           ✓ calls the requested function with transaction funds (55ms)
-           ✓ reverts when calling non-payable functions (58ms)
-
-     Suspendable
-       Constructor
-         ✓ should successfully deploy contract
-       Suspension functionality
-         ✓ should suspend contract (45ms)
-         ✓ should resume contract (85ms)
-       Modifiers
-         ✓ should not call an onlySuspended function while active
-         ✓ should not call an onlyActive function while suspended (66ms)
-       Events
-         ✓ should emit Suspended event
-         ✓ should emit Resumed event (58ms)
-
-
-     183 passing (21s)
+           ✓ calls the requested function with existing value (89ms)
+           ✓ calls the requested function with transaction funds (57ms)
+           ✓ reverts when calling non-payable functions (68ms)
+   
+   
+     159 passing (19s)
      1 pending
 
-
-
-     C20InvestProxy
-       Ownership
-         ✓ should have owner as fundWallet (39ms)
-       Sending Ether
-         ✓ does not allow amounts below minimum investment (87ms)
-         ✓ should receive user's money, correctly record balance and request time and emits EtherDeposited (127ms)
-       Getting Tokens
-         ✓ prevents withdrawal if price has not been updated (73ms)
-         ✓ prevents withdrawal if user has no balance (70ms)
-         ✓ allows withdrawal after price updated and emits TokensPurchased (213ms)
-         ✓ prevents second attempt at withdrawing tokens (66ms)
-         ✓ refunds when amount deposited exceeds available tokens and suspends contractand emits TokensPurchased and RefundGiven (360ms)
-       Suspendable Operations
-         ✓ prevents buying while contract is suspended (47ms)
-         ✓ does not resume if contract token balance is zero (87ms)
-         ✓ successfully resumes contract from suspension (186ms)
-       Admin
-         ✓ does not allow non-owner to withdraw ether from contract (55ms)
-         ✓ allows owner to withdraw ether from contract and yields correct balance (56ms)
-         ✓ does not allow withdrawing more than contract balance (54ms)
-         ✓ does not transfer out remaining token balance to nonowner (48ms)
-         ✓ transfers out remaining token balance (138ms)
-
-
-     16 passing (3s)

@@ -16,6 +16,7 @@ async function getBal(account) {
 }
 
 
+
 describe("C20InvestProxy", function(){
         const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2, user3, proxyAdminOwner] = accounts;
 
@@ -25,6 +26,10 @@ describe("C20InvestProxy", function(){
         var c20InvestProxy;
         var proxyAdmin;
 
+        async function getUnconvertedEther() {
+            console.log("unconverted ether ", (await c20Invest.unconvertedEther.call()).toString());
+        }
+        
         const createProxy = async function (logic, admin, initData, opts) {
             return TransparentUpgradeableProxy.new(logic, admin, initData, opts);
         };
@@ -84,6 +89,8 @@ describe("C20InvestProxy", function(){
                 async function(){
 
                     var receipt = await c20Invest.send(1e18, {from: user1});
+                    var initC20InvestBalance = await getBal(c20Invest.address);
+
                     expectEvent(
                         receipt,
                         "EtherDeposited",
@@ -92,7 +99,8 @@ describe("C20InvestProxy", function(){
 
                     var etherBalance = (await c20Invest.userBalances.call(user1)).toString();
                     var requestTime = (await c20Invest.requestTime.call(user1)).toNumber();
-                    expect(etherBalance).to.be.equal("1000000000000000000")
+                    expect(initC20InvestBalance).to.be.eql(ether("1"));
+                    expect(etherBalance).to.be.equal("1000000000000000000");
                     expect(requestTime).to.be.at.most((await time.latest()).toNumber());
                     expect(requestTime).to.be.at.least((await time.latest()).toNumber() - 10);
                 }
@@ -221,25 +229,68 @@ describe("C20InvestProxy", function(){
                 "allows owner to withdraw ether from contract and yields correct balance",
                 async function(){
                     var initFundWalletBalance = await getBal(fundWallet);
+                    var initC20InvestBalance = await getBal(c20Invest.address);
+                    
                     var txReceipt = await c20Invest.withdrawBalance(ether("1"), { from: fundWallet });
                     var gasPrice = new BN(await web3.eth.getGasPrice());
                     var expectedBalance = initFundWalletBalance
                                             .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed))).
                                             add(ether("1"));
                     var finalFundWalletBalance = await getBal(fundWallet);
+                    var finalC20InvestBalance = await getBal(c20Invest.address);
 
                     expect(expectedBalance).to.be.eql(finalFundWalletBalance);
+                    expect(ether("0")).to.be.eql(finalC20InvestBalance);
                 }
             );
 
             it(
                 "does not allow withdrawing more than contract balance",
                 async function(){
-                    var initFundWalletBalance = await getBal(fundWallet);
+                    var receipt = await c20Invest.send(ether("1.5"), {from: user1});
+                    var initC20InvestBalance = await getBal(c20Invest.address);
+
                     await expectRevert(
-                        c20Invest.withdrawBalance(initFundWalletBalance.add(new BN("1")), { from: fundWallet }),
+                        c20Invest.withdrawBalance(initC20InvestBalance.add(ether("2")), { from: fundWallet }),
                         "C20Invest: amount greater than available balance"
                     );
+                    
+                    await time.increase(1);
+                    await c20.updatePrice(100000, {from: fundWallet});
+                    await c20Invest.getTokens({from: user1});
+                }
+            );
+            
+            it(
+                "does not allow withdrawing unconverted ether",
+                async function(){
+                    var initC20InvestBalance = await getBal(c20Invest.address);
+                    await c20Invest.send(ether("1"), {from: user3});
+
+                    await expectRevert(
+                        c20Invest.withdrawBalance(initC20InvestBalance.add(ether("1")), { from: fundWallet }),
+                        "C20Invest: amount greater than available balance"
+                    );
+                }
+            );
+            
+           it(
+                "allows withdrawing everything but unconverted ether",
+                async function(){
+                    var initC20InvestBalance = await getBal(c20Invest.address);
+                    var initFundWalletBalance = await getBal(fundWallet);
+                    
+                    var txReceipt = await c20Invest.withdrawBalance(ether("1.5"), { from: fundWallet });
+                    
+                    var gasPrice = new BN(await web3.eth.getGasPrice());
+                    var expectedBalance = initFundWalletBalance
+                                            .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed))).
+                                            add(ether("1.5"));
+                    var finalFundWalletBalance = await getBal(fundWallet);
+                    var finalC20InvestBalance = await getBal(c20Invest.address);
+                    
+                    expect(expectedBalance).to.be.eql(finalFundWalletBalance);
+                    expect(finalC20InvestBalance).to.be.eql(initC20InvestBalance.sub(ether("1.5")));
                 }
             );
 
