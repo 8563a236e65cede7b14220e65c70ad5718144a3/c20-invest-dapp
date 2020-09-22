@@ -1,6 +1,0 @@
-Access
-======
-
-.. toctree::
-
-    ownable.rst

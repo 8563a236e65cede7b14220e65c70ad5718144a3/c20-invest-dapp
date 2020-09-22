@@ -5,21 +5,29 @@ const { ZERO_ADDRESS } = constants;
 const { expect } = require("chai");
 
 const C20 = contract.fromArtifact("C20");
-const C20JSON = require('../build/contracts/C20.json');
 const C20Invest = contract.fromArtifact("C20Invest");
+const C20InvestProxy = contract.fromArtifact("C20InvestProxy");
 const C20Vesting = contract.fromArtifact("C20Vesting");
+const ProxyAdmin = contract.fromArtifact("ProxyAdmin");
+const TransparentUpgradeableProxy = contract.fromArtifact('TransparentUpgradeableProxy');
 
 async function getBal(account) {
     return new BN(await web3.eth.getBalance(account))
 }
 
-describe("C20Invest", function(){
-        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2, user3] = accounts;
+
+describe("C20InvestProxy", function(){
+        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2, user3, proxyAdminOwner] = accounts;
 
         var c20;
         var c20Vesting;
         var c20Invest;
-        var web3socket;
+        var c20InvestProxy;
+        var proxyAdmin;
+
+        const createProxy = async function (logic, admin, initData, opts) {
+            return TransparentUpgradeableProxy.new(logic, admin, initData, opts);
+        };
 
         before(async function(){
             var totalSupply = 40656081;
@@ -37,9 +45,16 @@ describe("C20Invest", function(){
             await c20.buy({from: otherTokenHolders, value: otherTokenHoldersValueToSend});
 
             await time.advanceBlock();
-            c20Invest = await C20Invest.new([fundWallet], c20.address);
-
             await c20.enableTrading({from: fundWallet});
+
+            proxyAdmin = await ProxyAdmin.new({ from: proxyAdminOwner });
+            var c20InvestLogic = await C20Invest.new();
+            const calldata = c20InvestLogic.contract.methods['initialize(address,address)'](fundWallet, c20.address).encodeABI();
+
+            c20InvestProxy = await C20InvestProxy.new(c20InvestLogic.address, proxyAdmin.address, calldata);
+
+            c20Invest = await C20Invest.at(c20InvestProxy.address);
+
             await c20.transfer(c20Invest.address, ether(new BN(9253487)), {from: fundWallet});
         });
 
@@ -48,7 +63,7 @@ describe("C20Invest", function(){
                 "should have owner as fundWallet",
                 async function(){
                     var owners = await c20Invest.getOwners.call();
-                    expect(owners).to.be.eql([fundWallet]);
+                    expect(owners).to.be.equal(fundWallet);
                 }
             );
         });
@@ -143,8 +158,8 @@ describe("C20Invest", function(){
             );
 
             it(
-                "refunds when amount deposited exceeds available tokens and suspends contract" +
-                "and emits TokensPurchased and RefundGiven",
+                "refunds when amount deposited exceeds available tokens" +
+                " and emits RefundGiven",
                 async function(){
 
                     var previousUpdateTime = await c20.previousUpdateTime.call();
@@ -163,19 +178,13 @@ describe("C20Invest", function(){
 
                     await time.increase(1);
                     await c20.updatePrice(100000, {from: fundWallet});
-
+                    
                     var txReceipt2 = await c20Invest.getTokens({from: user3});
-
-                    expectEvent(
-                        txReceipt2,
-                        "TokensPurchased",
-                        { sender: user3, amount: initialContractBalance }
-                    );
-
+                    
                     expectEvent(
                         txReceipt2,
                         "RefundGiven",
-                        { sender: user3, amount: new BN("1") }
+                        { sender: user3, amount: etherToSend }
                     );
 
                     var userBalance = new BN((await c20.balanceOf.call(user3)).toString());
@@ -183,56 +192,16 @@ describe("C20Invest", function(){
 
                     var gasPrice = new BN(await web3.eth.getGasPrice());
                     var gasUsed = new BN(txReceipt.receipt.gasUsed + txReceipt2.receipt.gasUsed);
-                    var expectedBalance = user3BalanceInit.sub(etherToSend)
-                                            .sub(gasPrice.mul(gasUsed))
-                                            .add(new BN("1"));
+                    var expectedBalance = user3BalanceInit
+                                            .sub(gasPrice.mul(gasUsed));
+                                            
 
                     var user3BalanceAfter = await getBal(user3);
-                    var suspended = await c20Invest.isSuspended.call();
 
-                    expect(userBalance).to.be.eql(initialContractBalance);
-                    expect(contractBalance).to.be.eql(new BN("0"));
+                    expect(userBalance).to.be.eql(new BN("0"));
+                    expect(contractBalance).to.be.eql(initialContractBalance);
                     expect(user3BalanceAfter).to.be.eql(expectedBalance);
-                    expect(suspended).to.be.equal(true);
-                }
-            );
-        });
 
-        describe("Suspendable Operations", function(){
-            it(
-                "prevents buying while contract is suspended",
-                async function(){
-                    await expectRevert(
-                        c20Invest.send(1e18, {from: user2}),
-                        "Suspendable: function only available while contract active"
-                    )
-                }
-            );
-
-            it(
-                "does not resume if contract token balance is zero",
-                async function(){
-                    await expectRevert(
-                        c20Invest.resume({from: fundWallet}),
-                        "C20Invest: cannot resume with zero token balance"
-                    );
-                    var suspended = await c20Invest.isSuspended.call();
-                    expect(suspended).to.be.equal(true);
-                }
-            );
-
-            it(
-                "successfully resumes contract from suspension",
-                async function(){
-                    await c20.transfer(c20Invest.address, ether(new BN(1000)), {from: otherTokenHolders});
-                    var contractBalance = await c20.balanceOf.call(c20Invest.address);
-                    var expectedBalance = new BN("1000000000000000000000");
-                    var suspended = await c20Invest.isSuspended.call();
-                    expect(suspended).to.be.equal(true);
-                    await c20Invest.resume({from: fundWallet});
-                    suspended = await c20Invest.isSuspended.call();
-                    expect(suspended).to.be.equal(false);
-                    expect(contractBalance.toString()).to.be.eql(expectedBalance.toString());
                 }
             );
         });
@@ -243,7 +212,7 @@ describe("C20Invest", function(){
                 async function(){
                     await expectRevert(
                         c20Invest.withdrawBalance(ether("1"), { from: user1 }),
-                        "Ownable: caller is not the owner"
+                        "C20Invest: caller is not the owner"
                     );
                 }
             );
@@ -279,7 +248,7 @@ describe("C20Invest", function(){
                 async function(){
                     await expectRevert(
                         c20Invest.transferTokens(fundWallet, { from: user1 }),
-                        "Ownable: caller is not the owner"
+                        "C20Invest: caller is not the owner"
                     );
                 }
             );
@@ -300,5 +269,6 @@ describe("C20Invest", function(){
             );
 
         });
+
     }
 );

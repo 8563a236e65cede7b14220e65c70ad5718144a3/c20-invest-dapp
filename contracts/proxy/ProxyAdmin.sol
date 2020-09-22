@@ -2,18 +2,20 @@
 
 pragma solidity ^0.7.0;
 
-import "../access/Ownable.sol";
 import "./TransparentUpgradeableProxy.sol";
 
 /**
  * @dev This is an auxiliary contract meant to be assigned as the admin of a {TransparentUpgradeableProxy}. For an
  * explanation of why you would want to use this see the documentation for {TransparentUpgradeableProxy}.
  */
-contract ProxyAdmin is Ownable {
+contract ProxyAdmin {
+    
+    /// @dev State variable representing owner of the contract
+    address private _owner;
 
     /// @dev Constructor to compensate for own Ownable base contract
-    constructor(address[] memory owners) Ownable(owners) {
-
+    constructor() {
+        _owner = msg.sender;
     }
 
     /**
@@ -79,4 +81,19 @@ contract ProxyAdmin is Ownable {
     function upgradeAndCall(TransparentUpgradeableProxy proxy, address implementation, bytes memory data) public payable onlyOwner {
         proxy.upgradeToAndCall{value: msg.value}(implementation, data);
     }
+    
+    /// @dev Retrieve the owner of the contract
+    function getOwner() public view returns (address) {
+        return _owner;
+    }
+    
+    /// @dev Guard against non-owners calling privileged functions
+    modifier onlyOwner() {
+        require(
+            _owner == msg.sender,
+            "ProxyAdmin: caller is not the owner"
+        );
+        _;
+    }
+    
 }

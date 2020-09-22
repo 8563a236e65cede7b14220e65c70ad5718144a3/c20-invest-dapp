@@ -19,7 +19,7 @@ describe('ProxyAdmin', function () {
 
   beforeEach(async function () {
     const initializeData = Buffer.from('');
-    this.proxyAdmin = await ProxyAdmin.new([], { from: proxyAdminOwner });
+    this.proxyAdmin = await ProxyAdmin.new({ from: proxyAdminOwner });
     this.proxy = await TransparentUpgradeableProxy.new(
       this.implementationV1.address,
       this.proxyAdmin.address,
@@ -29,7 +29,7 @@ describe('ProxyAdmin', function () {
   });
 
   it('has an owner', async function () {
-    expect(await this.proxyAdmin.getOwners()).to.eql([proxyAdminOwner]);
+    expect(await this.proxyAdmin.getOwner()).to.equal(proxyAdminOwner);
   });
 
   describe('#getProxyAdmin', function () {

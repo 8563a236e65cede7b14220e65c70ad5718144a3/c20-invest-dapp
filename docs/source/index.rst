@@ -154,9 +154,7 @@ contract and an :sol:lib:`Address` library from OpenZeppelin that contains some 
 
    main_index.rst
    c20_base.rst
-   initializable_index.rst
    proxy_index.rst
-   access_index.rst
    math_index.rst
    utils_index.rst
 
