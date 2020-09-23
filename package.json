@@ -8,9 +8,9 @@
     "setup:python": "scripts/docs_setup.sh",
     "setup": "npm run setup:npm && npm run setup:python",
     "lint": "npm run lint:js && npm run lint:sol && npm run lint:slither",
-    "lint:js": "eslint --ignore-path .gitignore .",
+    "lint:js": "eslint .",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
-    "lint:slither": "slither .",
+    "lint:slither": "slither . --filter-paths \"contracts/Migrations.sol|contracts/mocks\"",
     "test": "mocha --exit --recursive",
     "save": "rm -rf ../c20-invest-dapp/* && cp -r . ../c20-invest-dapp && chmod -R 777 ../c20-invest-dapp/"
   },

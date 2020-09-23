@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.1;
+pragma solidity ^0.7.0;
 
 import "./c20_base/C20.sol";
 import "./math/SafeMathNew.sol";
@@ -21,14 +21,14 @@ contract C20Invest is Initializable {
     address private _owner;
     
     /// @dev State variable for C20 instance
-    C20 c20Instance;
+    C20 private _c20Instance;
     
     /// @dev Track unconverted ether to prevent accidental withdrawal
     /// by owner
     uint256 public unconvertedEther = 0;
 
     /// @dev The minimum investment a user is allowed to send
-    uint256 MIN_INVESTMENT;
+    uint256 public minInvestment;
 
     /// @dev Temporary storage for user's ether balance before
     /// conversion takes place
@@ -70,11 +70,11 @@ contract C20Invest is Initializable {
     /// C20 smart contract. Required to initialize the C20
     /// instance
     function initialize (address owner, address c20Address)
-    public
+    external
     initializer {
         _owner = owner;
-        c20Instance = C20(payable(c20Address));
-        MIN_INVESTMENT = 0.1 ether;
+        _c20Instance = C20(payable(c20Address));
+        minInvestment = 0.1 ether;
     }    
 
     /// @dev Allows changing the address of the C20 contract in the
@@ -83,8 +83,8 @@ contract C20Invest is Initializable {
     /// anyone.
     /// @param c20Address The address of the currently active
     /// C20 smart contract
-    function setC20Address(address c20Address) public onlyOwner {
-        c20Instance = C20(payable(c20Address));
+    function setC20Address(address c20Address) external onlyOwner {
+        _c20Instance = C20(payable(c20Address));
     }
 
     /// @dev The main function called by receive(). Records the
@@ -96,10 +96,10 @@ contract C20Invest is Initializable {
     /// within this contract.
     function buy() public payable {
         require(
-            msg.value >= MIN_INVESTMENT,
+            msg.value >= minInvestment,
             "C20Invest: ether received below minimum investment"
         );
-        requestTime[msg.sender] = c20Instance.previousUpdateTime();
+        requestTime[msg.sender] = _c20Instance.previousUpdateTime();
         userBalances[msg.sender] += msg.value;
         unconvertedEther += msg.value;
         emit EtherDeposited(msg.sender, msg.value);
@@ -128,15 +128,16 @@ contract C20Invest is Initializable {
     /// transferred to the user.
     function getTokens() external {
 
-        uint256 contractTokenBalance = c20Instance.balanceOf(address(this));
+        uint256 contractTokenBalance = _c20Instance.balanceOf(address(this));
         uint256 numTokens = 0;
         uint256 priceNumerator;
         uint256 priceDenominator;
         uint256 refund = 0;
+        bool success = false;
 
         // Forward pricing mechanism
         require(
-            requestTime[msg.sender] < c20Instance.previousUpdateTime(),
+            requestTime[msg.sender] < _c20Instance.previousUpdateTime(),
             "C20Invest: price has not updated yet"
         );
 
@@ -149,7 +150,7 @@ contract C20Invest is Initializable {
         // Get the current price from the C20 instance and work out the
         // number of tokens the user can purchase given their current
         // balance
-        (priceNumerator, priceDenominator) = c20Instance.prices(requestTime[msg.sender]);
+        (priceNumerator, priceDenominator) = _c20Instance.prices(requestTime[msg.sender]);
         numTokens = priceNumerator.mul(userBalances[msg.sender]).div(priceDenominator);
 
         // Revert the entire transaction if we do not have sufficient
@@ -158,17 +159,21 @@ contract C20Invest is Initializable {
             refund = userBalances[msg.sender];
             unconvertedEther -= refund;
             delete userBalances[msg.sender];
-            msg.sender.transfer(refund);
             emit RefundGiven(msg.sender, refund);
+            
+            msg.sender.transfer(refund);
+            
         } else {
             // Zero balance to prevent reentrancy attacks
+            // solhint-disable-next-line reentrancy
             unconvertedEther -= userBalances[msg.sender];
             delete userBalances[msg.sender];
-    
-            // Perform token transfer
-            c20Instance.transfer(msg.sender, numTokens);
-    
             emit TokensPurchased(msg.sender, numTokens);
+            
+            // Perform token transfer
+            success = _c20Instance.transfer(msg.sender, numTokens);
+            require(success, "C20Invest: token transfer failed");
+            
         }
 
     }
@@ -193,7 +198,7 @@ contract C20Invest is Initializable {
     /// reverts if amount is greater than contract ether balance
     /// minus unconvertedEther.
     /// @param amount The amount to withdraw in wei
-    function withdrawBalance(uint256 amount) public onlyOwner
+    function withdrawBalance(uint256 amount) external onlyOwner
     {
         require(
             amount <= getContractEtherBalance(),
@@ -208,11 +213,16 @@ contract C20Invest is Initializable {
     /// sent back to the fund wallet for transfer into the
     /// updated contract
     /// @param to The address to transfer the tokens to
-    function transferTokens(address to) public onlyOwner {
-        uint256 tokenBalance = c20Instance.balanceOf(address(this));
+    function transferTokens(address to) external onlyOwner {
+        uint256 tokenBalance = _c20Instance.balanceOf(address(this));
+        bool success = false;
         require(tokenBalance > 0, "C20Invest: contract ha zero token balance");
-        c20Instance.transfer(to, tokenBalance);
+        
         emit AllTokensTransferred(to, msg.sender, tokenBalance);
+        
+        success = _c20Instance.transfer(to, tokenBalance);
+        require(success, "C20Invest: token transfer failed");
+        
     }
 
     /// @dev The receive function is triggered when ether is sent to the
@@ -222,7 +232,7 @@ contract C20Invest is Initializable {
     }
     
     /// @dev Retrieve the owner of the contract
-    function getOwners() public view returns (address) {
+    function getOwners() external view returns (address) {
         return _owner;
     }
 

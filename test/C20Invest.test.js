@@ -1,325 +1,307 @@
-const { accounts, defaultSender, contract, web3, provider } = require("@openzeppelin/test-environment");
-const { balance, constants, expectEvent, expectRevert, ether, BN, time } = require("@openzeppelin/test-helpers");
-const { ZERO_ADDRESS } = constants;
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
+const { expectEvent, expectRevert, ether, BN, time } = require('@openzeppelin/test-helpers');
 
-const { expect } = require("chai");
+const { expect } = require('chai');
 
-const C20 = contract.fromArtifact("C20");
-const C20Invest = contract.fromArtifact("C20Invest");
-const C20InvestProxy = contract.fromArtifact("C20InvestProxy");
-const C20Vesting = contract.fromArtifact("C20Vesting");
-const ProxyAdmin = contract.fromArtifact("ProxyAdmin");
-const TransparentUpgradeableProxy = contract.fromArtifact('TransparentUpgradeableProxy');
+const C20 = contract.fromArtifact('C20');
+const C20Invest = contract.fromArtifact('C20Invest');
+const C20InvestProxy = contract.fromArtifact('C20InvestProxy');
+const C20Vesting = contract.fromArtifact('C20Vesting');
+const ProxyAdmin = contract.fromArtifact('ProxyAdmin');
 
-async function getBal(account) {
-    return new BN(await web3.eth.getBalance(account))
+async function getBal (account) {
+  return new BN(await web3.eth.getBalance(account));
 }
 
+describe('C20InvestProxy', function () {
+  const [
+    fundWallet,
+    controlWallet,
+    otherTokenHolders,
+    user1,
+    user2,
+    user3,
+    proxyAdminOwner,
+  ] = accounts;
 
+  let c20;
+  let c20Vesting;
+  let c20Invest;
+  let c20InvestProxy;
+  let proxyAdmin;
 
-describe("C20InvestProxy", function(){
-        const [ fundWallet, controlWallet, dummyVesting, otherTokenHolders, oracleAddress, user1, user2, user3, proxyAdminOwner] = accounts;
+  before(async function () {
+    c20 = await C20.new(controlWallet, 300000, 0, 7, { from: fundWallet, gas: 5000000 });
+    c20Vesting = await C20Vesting.new(c20.address, 7, { from: fundWallet });
+    await c20.setVestingContract(c20Vesting.address, { from: fundWallet });
 
-        var c20;
-        var c20Vesting;
-        var c20Invest;
-        var c20InvestProxy;
-        var proxyAdmin;
+    const fundWalletValueToSend = ether('30844.96');
+    await c20.buy({ from: fundWallet, value: fundWalletValueToSend });
 
-        async function getUnconvertedEther() {
-            console.log("unconverted ether ", (await c20Invest.unconvertedEther.call()).toString());
-        }
-        
-        const createProxy = async function (logic, admin, initData, opts) {
-            return TransparentUpgradeableProxy.new(logic, admin, initData, opts);
-        };
+    c20.verifyParticipant(otherTokenHolders, { from: fundWallet });
+    const otherTokenHoldersValueToSend = ether('104675.31');
+    await c20.buy({ from: otherTokenHolders, value: otherTokenHoldersValueToSend });
 
-        before(async function(){
-            var totalSupply = 40656081;
-            var fundWalletSupply = 9253488;
+    await time.advanceBlock();
+    await c20.enableTrading({ from: fundWallet });
 
-            c20 = await C20.new(controlWallet, 300000, 0, 7, {from: fundWallet, gas: 5000000});
-            c20Vesting = await C20Vesting.new(c20.address, 7, {from: fundWallet});
-            await c20.setVestingContract(c20Vesting.address, {from: fundWallet});
+    proxyAdmin = await ProxyAdmin.new({ from: proxyAdminOwner });
+    const c20InvestLogic = await C20Invest.new();
+    const calldata =
+      c20InvestLogic.contract.methods['initialize(address,address)'](fundWallet, c20.address).encodeABI();
 
-            var fundWalletValueToSend = ether("30844.96");
-            await c20.buy({from: fundWallet, value: fundWalletValueToSend});
+    c20InvestProxy = await C20InvestProxy.new(c20InvestLogic.address, proxyAdmin.address, calldata);
 
-            c20.verifyParticipant(otherTokenHolders, {from: fundWallet});
-            var otherTokenHoldersValueToSend = ether("104675.31");
-            await c20.buy({from: otherTokenHolders, value: otherTokenHoldersValueToSend});
+    c20Invest = await C20Invest.at(c20InvestProxy.address);
 
-            await time.advanceBlock();
-            await c20.enableTrading({from: fundWallet});
+    await c20.transfer(c20Invest.address, ether(new BN(9253487)), { from: fundWallet });
+  });
 
-            proxyAdmin = await ProxyAdmin.new({ from: proxyAdminOwner });
-            var c20InvestLogic = await C20Invest.new();
-            const calldata = c20InvestLogic.contract.methods['initialize(address,address)'](fundWallet, c20.address).encodeABI();
+  describe('Ownership', function () {
+    it(
+      'should have owner as fundWallet',
+      async function () {
+        const owners = await c20Invest.getOwners.call();
+        expect(owners).to.be.equal(fundWallet);
+      },
+    );
+  });
 
-            c20InvestProxy = await C20InvestProxy.new(c20InvestLogic.address, proxyAdmin.address, calldata);
+  describe('Sending Ether', function () {
+    it(
+      'does not allow amounts below minimum investment',
+      async function () {
+        await expectRevert(
+          c20Invest.send(0.01e18, { from: user1 }),
+          'C20Invest: ether received below minimum investment',
+        );
+      },
+    );
 
-            c20Invest = await C20Invest.at(c20InvestProxy.address);
+    it(
+      'should receive user\'s money, correctly record balance and request time and emits EtherDeposited',
+      async function () {
+        const receipt = await c20Invest.send(1e18, { from: user1 });
+        const initC20InvestBalance = await getBal(c20Invest.address);
 
-            await c20.transfer(c20Invest.address, ether(new BN(9253487)), {from: fundWallet});
-        });
+        expectEvent(
+          receipt,
+          'EtherDeposited',
+          { sender: user1, amount: ether('1') },
+        );
 
-        describe("Ownership", function(){
-            it(
-                "should have owner as fundWallet",
-                async function(){
-                    var owners = await c20Invest.getOwners.call();
-                    expect(owners).to.be.equal(fundWallet);
-                }
-            );
-        });
+        const etherBalance = (await c20Invest.userBalances.call(user1)).toString();
+        const requestTime = (await c20Invest.requestTime.call(user1)).toNumber();
+        expect(initC20InvestBalance).to.be.eql(ether('1'));
+        expect(etherBalance).to.be.equal('1000000000000000000');
+        expect(requestTime).to.be.at.most((await time.latest()).toNumber());
+        expect(requestTime).to.be.at.least((await time.latest()).toNumber() - 10);
+      },
+    );
+  });
 
-        describe("Sending Ether", function(){
-            it(
-                "does not allow amounts below minimum investment",
-                async function(){
-                    await expectRevert(
-                        c20Invest.send(0.01e18, {from: user1}),
-                        "C20Invest: ether received below minimum investment"
-                    )
-                }
-            );
+  describe('Getting Tokens', function () {
+    it(
+      'prevents withdrawal if price has not been updated',
+      async function () {
+        await expectRevert(
+          c20Invest.getTokens({ from: user1 }),
+          'C20Invest: price has not updated yet',
+        );
+      },
+    );
 
-            it(
-                "should receive user's money, correctly record balance and request time and emits EtherDeposited",
-                async function(){
+    it(
+      'prevents withdrawal if user has no balance',
+      async function () {
+        await expectRevert(
+          c20Invest.getTokens({ from: user2 }),
+          'C20Invest: user has no ether for conversion',
+        );
+      },
+    );
 
-                    var receipt = await c20Invest.send(1e18, {from: user1});
-                    var initC20InvestBalance = await getBal(c20Invest.address);
+    it(
+      'allows withdrawal after price updated and emits TokensPurchased',
+      async function () {
+        const initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
-                    expectEvent(
-                        receipt,
-                        "EtherDeposited",
-                        { sender: user1, amount: ether("1") }
-                    );
+        await c20.updatePrice(100000, { from: fundWallet });
 
-                    var etherBalance = (await c20Invest.userBalances.call(user1)).toString();
-                    var requestTime = (await c20Invest.requestTime.call(user1)).toNumber();
-                    expect(initC20InvestBalance).to.be.eql(ether("1"));
-                    expect(etherBalance).to.be.equal("1000000000000000000");
-                    expect(requestTime).to.be.at.most((await time.latest()).toNumber());
-                    expect(requestTime).to.be.at.least((await time.latest()).toNumber() - 10);
-                }
-            );
-        });
+        const receipt = await c20Invest.getTokens({ from: user1 });
 
-        describe("Getting Tokens", function(){
-            it(
-                "prevents withdrawal if price has not been updated",
-                async function(){
-                    await expectRevert(
-                        c20Invest.getTokens({from: user1}),
-                        "C20Invest: price has not updated yet"
-                    );
-                }
-            );
+        const userBalance = new BN((await c20.balanceOf.call(user1)).toString());
+        const contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+        const expectedNumberTokens = new BN('100000000000000000000');
 
-            it(
-                "prevents withdrawal if user has no balance",
-                async function(){
-                    await expectRevert(
-                        c20Invest.getTokens({from: user2}),
-                        "C20Invest: user has no ether for conversion"
-                    );
-                }
-            );
+        expectEvent(
+          receipt,
+          'TokensPurchased',
+          { sender: user1, amount: expectedNumberTokens },
+        );
 
-            it(
-                "allows withdrawal after price updated and emits TokensPurchased",
-                async function(){
-                    var previousUpdateTime = await c20.previousUpdateTime.call();
-                    var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+        expect(userBalance).to.be.eql(expectedNumberTokens);
+        expect(contractBalance).to.be.eql(initialContractBalance.sub(expectedNumberTokens));
+      },
+    );
 
-                    await c20.updatePrice(100000, {from: fundWallet});
+    it(
+      'prevents second attempt at withdrawing tokens',
+      async function () {
+        await expectRevert(
+          c20Invest.getTokens({ from: user1 }),
+          'C20Invest: user has no ether for conversion',
+        );
+      },
+    );
 
-                    var receipt = await c20Invest.getTokens({from: user1});
+    it(
+      'refunds when amount deposited exceeds available tokens' +
+                ' and emits RefundGiven',
+      async function () {
+        const initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
+        const currentPrice = await c20.currentPrice.call();
 
-                    var userBalance = new BN((await c20.balanceOf.call(user1)).toString());
-                    var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
-                    var expectedNumberTokens = new BN("100000000000000000000");
+        const user3BalanceInit = await getBal(user3);
 
-                    expectEvent(
-                        receipt,
-                        "TokensPurchased",
-                        { sender: user1, amount: expectedNumberTokens }
-                    );
+        const etherToSend = initialContractBalance
+          .mul(currentPrice.denominator)
+          .div(currentPrice.numerator)
+          .add(new BN('1'));
+        const txReceipt = await c20Invest.send(etherToSend, { from: user3 });
 
-                    expect(userBalance).to.be.eql(expectedNumberTokens);
-                    expect(contractBalance).to.be.eql(initialContractBalance.sub(expectedNumberTokens));
+        await time.increase(1);
+        await c20.updatePrice(100000, { from: fundWallet });
 
-                }
-            );
+        const txReceipt2 = await c20Invest.getTokens({ from: user3 });
 
-            it(
-                "prevents second attempt at withdrawing tokens",
-                async function(){
-                    await expectRevert(
-                        c20Invest.getTokens({from: user1}),
-                        "C20Invest: user has no ether for conversion"
-                    );
-                }
-            );
+        expectEvent(
+          txReceipt2,
+          'RefundGiven',
+          { sender: user3, amount: etherToSend },
+        );
 
-            it(
-                "refunds when amount deposited exceeds available tokens" +
-                " and emits RefundGiven",
-                async function(){
+        const userBalance = new BN((await c20.balanceOf.call(user3)).toString());
+        const contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
 
-                    var previousUpdateTime = await c20.previousUpdateTime.call();
-                    var initialContractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+        const gasPrice = new BN(await web3.eth.getGasPrice());
+        const gasUsed = new BN(txReceipt.receipt.gasUsed + txReceipt2.receipt.gasUsed);
+        const expectedBalance = user3BalanceInit
+          .sub(gasPrice.mul(gasUsed));
 
-                    var currentPrice = await c20.currentPrice.call()
+        const user3BalanceAfter = await getBal(user3);
 
-                    var user3BalanceInit = await getBal(user3);
+        expect(userBalance).to.be.eql(new BN('0'));
+        expect(contractBalance).to.be.eql(initialContractBalance);
+        expect(user3BalanceAfter).to.be.eql(expectedBalance);
+      },
+    );
+  });
 
-                    var etherToSend = initialContractBalance
-                                        .mul(currentPrice.denominator)
-                                        .div(currentPrice.numerator)
-                                        .add(new BN("1"));
-                    var txReceipt = await c20Invest.send(etherToSend, {from: user3});
+  describe('Admin', function () {
+    it(
+      'does not allow non-owner to withdraw ether from contract',
+      async function () {
+        await expectRevert(
+          c20Invest.withdrawBalance(ether('1'), { from: user1 }),
+          'C20Invest: caller is not the owner',
+        );
+      },
+    );
 
+    it(
+      'allows owner to withdraw ether from contract and yields correct balance',
+      async function () {
+        const initFundWalletBalance = await getBal(fundWallet);
 
-                    await time.increase(1);
-                    await c20.updatePrice(100000, {from: fundWallet});
-                    
-                    var txReceipt2 = await c20Invest.getTokens({from: user3});
-                    
-                    expectEvent(
-                        txReceipt2,
-                        "RefundGiven",
-                        { sender: user3, amount: etherToSend }
-                    );
+        const txReceipt = await c20Invest.withdrawBalance(ether('1'), { from: fundWallet });
+        const gasPrice = new BN(await web3.eth.getGasPrice());
+        const expectedBalance = initFundWalletBalance
+          .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed)))
+          .add(ether('1'));
+        const finalFundWalletBalance = await getBal(fundWallet);
+        const finalC20InvestBalance = await getBal(c20Invest.address);
 
-                    var userBalance = new BN((await c20.balanceOf.call(user3)).toString());
-                    var contractBalance = new BN((await c20.balanceOf.call(c20Invest.address)).toString());
+        expect(expectedBalance).to.be.eql(finalFundWalletBalance);
+        expect(ether('0')).to.be.eql(finalC20InvestBalance);
+      },
+    );
 
-                    var gasPrice = new BN(await web3.eth.getGasPrice());
-                    var gasUsed = new BN(txReceipt.receipt.gasUsed + txReceipt2.receipt.gasUsed);
-                    var expectedBalance = user3BalanceInit
-                                            .sub(gasPrice.mul(gasUsed));
-                                            
+    it(
+      'does not allow withdrawing more than contract balance',
+      async function () {
+        await c20Invest.send(ether('1.5'), { from: user1 });
+        const initC20InvestBalance = await getBal(c20Invest.address);
 
-                    var user3BalanceAfter = await getBal(user3);
+        await expectRevert(
+          c20Invest.withdrawBalance(initC20InvestBalance.add(ether('2')), { from: fundWallet }),
+          'C20Invest: amount greater than available balance',
+        );
 
-                    expect(userBalance).to.be.eql(new BN("0"));
-                    expect(contractBalance).to.be.eql(initialContractBalance);
-                    expect(user3BalanceAfter).to.be.eql(expectedBalance);
+        await time.increase(1);
+        await c20.updatePrice(100000, { from: fundWallet });
+        await c20Invest.getTokens({ from: user1 });
+      },
+    );
 
-                }
-            );
-        });
+    it(
+      'does not allow withdrawing unconverted ether',
+      async function () {
+        const initC20InvestBalance = await getBal(c20Invest.address);
+        await c20Invest.send(ether('1'), { from: user3 });
 
-        describe("Admin", function(){
-            it(
-                "does not allow non-owner to withdraw ether from contract",
-                async function(){
-                    await expectRevert(
-                        c20Invest.withdrawBalance(ether("1"), { from: user1 }),
-                        "C20Invest: caller is not the owner"
-                    );
-                }
-            );
+        await expectRevert(
+          c20Invest.withdrawBalance(initC20InvestBalance.add(ether('1')), { from: fundWallet }),
+          'C20Invest: amount greater than available balance',
+        );
+      },
+    );
 
-            it(
-                "allows owner to withdraw ether from contract and yields correct balance",
-                async function(){
-                    var initFundWalletBalance = await getBal(fundWallet);
-                    var initC20InvestBalance = await getBal(c20Invest.address);
-                    
-                    var txReceipt = await c20Invest.withdrawBalance(ether("1"), { from: fundWallet });
-                    var gasPrice = new BN(await web3.eth.getGasPrice());
-                    var expectedBalance = initFundWalletBalance
-                                            .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed))).
-                                            add(ether("1"));
-                    var finalFundWalletBalance = await getBal(fundWallet);
-                    var finalC20InvestBalance = await getBal(c20Invest.address);
+    it(
+      'allows withdrawing everything but unconverted ether',
+      async function () {
+        const initC20InvestBalance = await getBal(c20Invest.address);
+        const initFundWalletBalance = await getBal(fundWallet);
 
-                    expect(expectedBalance).to.be.eql(finalFundWalletBalance);
-                    expect(ether("0")).to.be.eql(finalC20InvestBalance);
-                }
-            );
+        const txReceipt = await c20Invest.withdrawBalance(ether('1.5'), { from: fundWallet });
 
-            it(
-                "does not allow withdrawing more than contract balance",
-                async function(){
-                    var receipt = await c20Invest.send(ether("1.5"), {from: user1});
-                    var initC20InvestBalance = await getBal(c20Invest.address);
+        const gasPrice = new BN(await web3.eth.getGasPrice());
+        const expectedBalance = initFundWalletBalance
+          .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed)))
+          .add(ether('1.5'));
+        const finalFundWalletBalance = await getBal(fundWallet);
+        const finalC20InvestBalance = await getBal(c20Invest.address);
 
-                    await expectRevert(
-                        c20Invest.withdrawBalance(initC20InvestBalance.add(ether("2")), { from: fundWallet }),
-                        "C20Invest: amount greater than available balance"
-                    );
-                    
-                    await time.increase(1);
-                    await c20.updatePrice(100000, {from: fundWallet});
-                    await c20Invest.getTokens({from: user1});
-                }
-            );
-            
-            it(
-                "does not allow withdrawing unconverted ether",
-                async function(){
-                    var initC20InvestBalance = await getBal(c20Invest.address);
-                    await c20Invest.send(ether("1"), {from: user3});
+        expect(expectedBalance).to.be.eql(finalFundWalletBalance);
+        expect(finalC20InvestBalance).to.be.eql(initC20InvestBalance.sub(ether('1.5')));
+      },
+    );
 
-                    await expectRevert(
-                        c20Invest.withdrawBalance(initC20InvestBalance.add(ether("1")), { from: fundWallet }),
-                        "C20Invest: amount greater than available balance"
-                    );
-                }
-            );
-            
-           it(
-                "allows withdrawing everything but unconverted ether",
-                async function(){
-                    var initC20InvestBalance = await getBal(c20Invest.address);
-                    var initFundWalletBalance = await getBal(fundWallet);
-                    
-                    var txReceipt = await c20Invest.withdrawBalance(ether("1.5"), { from: fundWallet });
-                    
-                    var gasPrice = new BN(await web3.eth.getGasPrice());
-                    var expectedBalance = initFundWalletBalance
-                                            .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed))).
-                                            add(ether("1.5"));
-                    var finalFundWalletBalance = await getBal(fundWallet);
-                    var finalC20InvestBalance = await getBal(c20Invest.address);
-                    
-                    expect(expectedBalance).to.be.eql(finalFundWalletBalance);
-                    expect(finalC20InvestBalance).to.be.eql(initC20InvestBalance.sub(ether("1.5")));
-                }
-            );
+    it(
+      'does not transfer out remaining token balance to nonowner',
+      async function () {
+        await expectRevert(
+          c20Invest.transferTokens(fundWallet, { from: user1 }),
+          'C20Invest: caller is not the owner',
+        );
+      },
+    );
 
-            it(
-                "does not transfer out remaining token balance to nonowner",
-                async function(){
-                    await expectRevert(
-                        c20Invest.transferTokens(fundWallet, { from: user1 }),
-                        "C20Invest: caller is not the owner"
-                    );
-                }
-            );
+    it(
+      'transfers out remaining token balance',
+      async function () {
+        const initFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
+        const initContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
+        await c20Invest.transferTokens(fundWallet, { from: fundWallet });
+        const finalFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
+        const finalContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
 
-            it(
-                "transfers out remaining token balance",
-                async function(){
-                    var initFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
-                    var initContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
-                    await c20Invest.transferTokens(fundWallet, { from: fundWallet });
-                    var finalFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
-                    var finalContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
-
-                    expect(finalFundWalletTokenBalance.toString())
-                        .to.be.eql(initFundWalletTokenBalance.add(initContractTokenBalance).toString());
-                    expect(finalContractTokenBalance.toString()).to.be.eql("0");
-                }
-            );
-
-        });
-
-    }
+        expect(finalFundWalletTokenBalance.toString())
+          .to.be.eql(initFundWalletTokenBalance.add(initContractTokenBalance).toString());
+        expect(finalContractTokenBalance.toString()).to.be.eql('0');
+      },
+    );
+  });
+},
 );

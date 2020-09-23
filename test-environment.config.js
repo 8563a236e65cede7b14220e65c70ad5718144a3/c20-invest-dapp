@@ -1,6 +1,6 @@
 module.exports = {
-    accounts: {
-        amount: 10,
-        ether: 105000
-    }
-}
+  accounts: {
+    amount: 10,
+    ether: 105000,
+  },
+};

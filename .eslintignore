@@ -1,0 +1,10 @@
+truffle-config.js
+.idea/
+todo.txt
+node_modules
+docs/build
+build
+coverage
+coverage.json
+package-lock.json
+run/*
