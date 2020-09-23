@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.0;
+pragma solidity ^0.7.1;
 
 import "./c20_base/C20.sol";
 import "./math/SafeMathNew.sol";
