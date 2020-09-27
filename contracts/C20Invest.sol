@@ -100,8 +100,8 @@ contract C20Invest is Initializable {
             "C20Invest: ether received below minimum investment"
         );
         requestTime[msg.sender] = _c20Instance.previousUpdateTime();
-        userBalances[msg.sender] += msg.value;
-        unconvertedEther += msg.value;
+        userBalances[msg.sender] = userBalances[msg.sender].add(msg.value);
+        unconvertedEther = unconvertedEther.add(msg.value);
         emit EtherDeposited(msg.sender, msg.value);
     }
 
@@ -157,7 +157,7 @@ contract C20Invest is Initializable {
         // tokens
         if (numTokens > contractTokenBalance) {
             refund = userBalances[msg.sender];
-            unconvertedEther -= refund;
+            unconvertedEther = unconvertedEther.sub(refund);
             delete userBalances[msg.sender];
             emit RefundGiven(msg.sender, refund);
             
@@ -166,7 +166,7 @@ contract C20Invest is Initializable {
         } else {
             // Zero balance to prevent reentrancy attacks
             // solhint-disable-next-line reentrancy
-            unconvertedEther -= userBalances[msg.sender];
+            unconvertedEther = unconvertedEther.sub(userBalances[msg.sender]);
             delete userBalances[msg.sender];
             emit TokensPurchased(msg.sender, numTokens);
             
@@ -190,7 +190,7 @@ contract C20Invest is Initializable {
         if(unconvertedEther > address(this).balance){
             return 0;
         } else {
-            return address(this).balance - unconvertedEther; 
+            return address(this).balance.sub(unconvertedEther); 
         }
     }
 
