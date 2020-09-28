@@ -57,6 +57,18 @@ describe('C20InvestProxy', function () {
     await c20.transfer(c20Invest.address, ether(new BN(9253487)), { from: fundWallet });
   });
 
+   describe("Initializer", function(){
+      it(
+         "cannot be reinitialized",
+         async function() {
+            await expectRevert(
+               c20Invest.initialize(fundWallet, c20.address),
+               "Initializable: contract is already initialized"
+            );
+         }
+      );
+   })
+
   describe('Ownership', function () {
     it(
       'should have owner as fundWallet',
