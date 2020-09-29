@@ -73,7 +73,7 @@ describe('C20InvestProxy', function () {
     it(
       'should have owner as fundWallet',
       async function () {
-        const owners = await c20Invest.getOwners.call();
+        const owners = await c20Invest.getOwner.call();
         expect(owners).to.be.equal(fundWallet);
       },
     );
@@ -216,18 +216,18 @@ describe('C20InvestProxy', function () {
       'does not allow non-owner to withdraw ether from contract',
       async function () {
         await expectRevert(
-          c20Invest.withdrawBalance(ether('1'), { from: user1 }),
+          c20Invest.withdrawETHBalance(ether('1'), { from: user1 }),
           'C20Invest: caller is not the owner',
         );
       },
     );
-
+    
     it(
       'allows owner to withdraw ether from contract and yields correct balance',
       async function () {
         const initFundWalletBalance = await getBal(fundWallet);
 
-        const txReceipt = await c20Invest.withdrawBalance(ether('1'), { from: fundWallet });
+        const txReceipt = await c20Invest.withdrawETHBalance(ether('1'), { from: fundWallet });
         const gasPrice = new BN(await web3.eth.getGasPrice());
         const expectedBalance = initFundWalletBalance
           .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed)))
@@ -247,7 +247,7 @@ describe('C20InvestProxy', function () {
         const initC20InvestBalance = await getBal(c20Invest.address);
 
         await expectRevert(
-          c20Invest.withdrawBalance(initC20InvestBalance.add(ether('2')), { from: fundWallet }),
+          c20Invest.withdrawETHBalance(initC20InvestBalance.add(ether('2')), { from: fundWallet }),
           'C20Invest: amount greater than available balance',
         );
 
@@ -264,7 +264,7 @@ describe('C20InvestProxy', function () {
         await c20Invest.send(ether('1'), { from: user3 });
 
         await expectRevert(
-          c20Invest.withdrawBalance(initC20InvestBalance.add(ether('1')), { from: fundWallet }),
+          c20Invest.withdrawETHBalance(initC20InvestBalance.add(ether('1')), { from: fundWallet }),
           'C20Invest: amount greater than available balance',
         );
       },
@@ -276,7 +276,7 @@ describe('C20InvestProxy', function () {
         const initC20InvestBalance = await getBal(c20Invest.address);
         const initFundWalletBalance = await getBal(fundWallet);
 
-        const txReceipt = await c20Invest.withdrawBalance(ether('1.5'), { from: fundWallet });
+        const txReceipt = await c20Invest.withdrawETHBalance(ether('1.5'), { from: fundWallet });
 
         const gasPrice = new BN(await web3.eth.getGasPrice());
         const expectedBalance = initFundWalletBalance
@@ -289,12 +289,42 @@ describe('C20InvestProxy', function () {
         expect(finalC20InvestBalance).to.be.eql(initC20InvestBalance.sub(ether('1.5')));
       },
     );
+    
+    it(
+      'does not allow non-owner to use removeAllEther()',
+      async function () {
+        await expectRevert(
+          c20Invest.removeAllEther({ from: user1 }),
+          'C20Invest: caller is not the owner',
+        );
+      },
+    );
+    
+    it(
+      'allows removeAllEther() to withdraw everything including unconverted ether',
+      async function () {
+        const initC20InvestBalance = await getBal(c20Invest.address);
+        const initFundWalletBalance = await getBal(fundWallet);
+
+        const txReceipt = await c20Invest.removeAllEther({ from: fundWallet });
+
+        const gasPrice = new BN(await web3.eth.getGasPrice());
+        const expectedBalance = initFundWalletBalance
+          .sub(gasPrice.mul(new BN(txReceipt.receipt.gasUsed)))
+          .add(initC20InvestBalance);
+        const finalFundWalletBalance = await getBal(fundWallet);
+        const finalC20InvestBalance = await getBal(c20Invest.address);
+        
+        expect(expectedBalance).to.be.bignumber.equal(finalFundWalletBalance);
+        expect(finalC20InvestBalance).to.be.bignumber.equal(new BN("0"));
+      },
+    );
 
     it(
       'does not transfer out remaining token balance to nonowner',
       async function () {
         await expectRevert(
-          c20Invest.transferTokens(fundWallet, { from: user1 }),
+          c20Invest.removeTokens({ from: user1 }),
           'C20Invest: caller is not the owner',
         );
       },
@@ -305,7 +335,7 @@ describe('C20InvestProxy', function () {
       async function () {
         const initFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
         const initContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
-        await c20Invest.transferTokens(fundWallet, { from: fundWallet });
+        await c20Invest.removeTokens({ from: fundWallet });
         const finalFundWalletTokenBalance = await c20.balanceOf.call(fundWallet);
         const finalContractTokenBalance = await c20.balanceOf.call(c20Invest.address);
 
