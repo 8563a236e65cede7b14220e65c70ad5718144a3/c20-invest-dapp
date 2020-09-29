@@ -133,7 +133,7 @@ contract C20Invest is Initializable {
         uint256 priceDenominator;
         uint256 refund = 0;
         bool success = false;
-
+        bytes memory returnData;
         // Forward pricing mechanism
         require(
             requestTime[msg.sender] < _c20Instance.previousUpdateTime(),
@@ -160,7 +160,8 @@ contract C20Invest is Initializable {
             delete userBalances[msg.sender];
             emit RefundGiven(msg.sender, refund);
             
-            msg.sender.transfer(refund);
+            (success, returnData) = msg.sender.call{value: amount}("");
+            require(success, "C20Invest: getTokens refund error");
             
         } else {
             // Zero balance to prevent reentrancy attacks
@@ -203,13 +204,22 @@ contract C20Invest is Initializable {
             amount <= getContractEtherBalance(),
             "C20Invest: amount greater than available balance"
         );
-        msg.sender.transfer(amount);
+        bool success = false;
+        bytes memory returnData;
+        
+        (success, returnData) = msg.sender.call{value: amount}("");
+        require(success, "C20Invest: withdrawETHBalance failed");
     }
 
     /// @dev Allows owner to withdraw all ether stored. 
     function removeAllEther() external onlyOwner
     {
-        msg.sender.transfer(address(this).balance);
+        bool success = false;
+        bytes memory returnData;
+        
+        (success, returnData) = msg.sender.call{value: address(this).balance}("");
+        require(success, "C20Invest: removeAllEther failed");
+
     }
 
     /// @dev Transfers all tokens within this account to the
