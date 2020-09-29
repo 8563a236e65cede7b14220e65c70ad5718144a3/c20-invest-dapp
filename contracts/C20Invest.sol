@@ -160,7 +160,7 @@ contract C20Invest is Initializable {
             delete userBalances[msg.sender];
             emit RefundGiven(msg.sender, refund);
             
-            (success, returnData) = msg.sender.call{value: amount}("");
+            (success, returnData) = msg.sender.call{ value: refund }("");
             require(success, "C20Invest: getTokens refund error");
             
         } else {
