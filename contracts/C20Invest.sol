@@ -58,10 +58,9 @@ contract C20Invest is Initializable {
     
     /// @dev Emitted when all tokens are transferred out of this
     /// contract
-    /// @param to The address that will receive the tokens
     /// @param sender The account which triggered the transfer
     /// @param amount The number of tokens transferred
-    event AllTokensTransferred(address indexed to, address indexed sender, uint256 amount);
+    event AllTokensTransferred(address indexed sender, uint256 amount);
 
     
     /// @dev Initializer for this contract
@@ -75,7 +74,7 @@ contract C20Invest is Initializable {
         _owner = owner;
         _c20Instance = C20(payable(c20Address));
         minInvestment = 0.1 ether;
-    }    
+    }
 
     /// @dev Allows changing the address of the C20 contract in the
     /// event of an upgrade. The inheriting contract should wrap this
@@ -107,7 +106,7 @@ contract C20Invest is Initializable {
 
     /// @dev Allows the user to redeem their tokens given the amount
     /// of ether the user had previously sent to this contract and
-    /// the previous C20 price update.
+    /// the following C20 price update.
     ///
     /// We first check if the C20 price has been updated since the time
     /// the user last sent ether to the contract. We then see if the user
@@ -198,7 +197,7 @@ contract C20Invest is Initializable {
     /// reverts if amount is greater than contract ether balance
     /// minus unconvertedEther.
     /// @param amount The amount to withdraw in wei
-    function withdrawBalance(uint256 amount) external onlyOwner
+    function withdrawETHBalance(uint256 amount) external onlyOwner
     {
         require(
             amount <= getContractEtherBalance(),
@@ -207,20 +206,22 @@ contract C20Invest is Initializable {
         msg.sender.transfer(amount);
     }
 
+    /// @dev Allows owner to withdraw all ether stored. 
+    function removeAllEther() external onlyOwner
+    {
+        msg.sender.transfer(address(this).balance);
+    }
+
     /// @dev Transfers all tokens within this account to the
-    /// supplied address. The use case for this is upgrade to
-    /// the next version of this contract. The tokens can be
-    /// sent back to the fund wallet for transfer into the
-    /// updated contract
-    /// @param to The address to transfer the tokens to
-    function transferTokens(address to) external onlyOwner {
+    /// owner.
+    function removeTokens() external onlyOwner {
         uint256 tokenBalance = _c20Instance.balanceOf(address(this));
         bool success = false;
-        require(tokenBalance > 0, "C20Invest: contract ha zero token balance");
+        require(tokenBalance > 0, "C20Invest: contract has zero token balance");
         
-        emit AllTokensTransferred(to, msg.sender, tokenBalance);
+        emit AllTokensTransferred(msg.sender, tokenBalance);
         
-        success = _c20Instance.transfer(to, tokenBalance);
+        success = _c20Instance.transfer(msg.sender, tokenBalance);
         require(success, "C20Invest: token transfer failed");
         
     }
@@ -232,7 +233,7 @@ contract C20Invest is Initializable {
     }
     
     /// @dev Retrieve the owner of the contract
-    function getOwners() external view returns (address) {
+    function getOwner() external view returns (address) {
         return _owner;
     }
 
@@ -244,7 +245,7 @@ contract C20Invest is Initializable {
         );
         _;
     }
-    
+
     //#########################################################################//
     // Next versions' code and state variables should only go after here. Do   //
     // not change any of the preceding code or inherited contract code. This   //
