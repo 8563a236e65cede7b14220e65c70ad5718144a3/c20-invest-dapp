@@ -7,6 +7,7 @@ const C20 = contract.fromArtifact('C20');
 const C20Invest = contract.fromArtifact('C20Invest');
 const C20InvestProxy = contract.fromArtifact('C20InvestProxy');
 const C20Vesting = contract.fromArtifact('C20Vesting');
+const ReentrancyGetTokens = contract.fromArtifact('ReentrancyGetTokens');
 const ProxyAdmin = contract.fromArtifact('ProxyAdmin');
 
 async function getBal (account) {
@@ -22,6 +23,7 @@ describe('C20InvestProxy', function () {
     user2,
     user3,
     proxyAdminOwner,
+    attacker,
   ] = accounts;
 
   let c20;
@@ -212,6 +214,27 @@ describe('C20InvestProxy', function () {
   });
 
   describe('Admin', function () {
+  
+    it(
+      'does not allow non-owner to set minimum investment',
+      async function () {
+        await expectRevert(
+          c20Invest.setMinInvestment(ether("0.2"), {from: user1}),
+          'C20Invest: caller is not the owner',
+        );
+      },
+    );
+  
+    it(
+      'allows owner to set minimum investment',
+      async function () {
+         await c20Invest.setMinInvestment(ether("0.2"), {from: fundWallet});
+         let minInvestment = await c20Invest.minInvestment.call();
+         
+         expect(minInvestment).to.be.bignumber.equal(ether("0.2"));
+      },
+    );
+  
     it(
       'does not allow non-owner to withdraw ether from contract',
       async function () {
@@ -344,6 +367,34 @@ describe('C20InvestProxy', function () {
         expect(finalContractTokenBalance.toString()).to.be.eql('0');
       },
     );
+    
   });
-},
-);
+  
+  describe("Reentrancy", function(){
+    it(
+      'does not allow reentrancy in getTokens() for refund',
+      async function(){
+         await c20Invest.send(ether("10"), { from: user1 });
+         let reentrancyGetTokens = await ReentrancyGetTokens.new(c20Invest.address);
+         await reentrancyGetTokens.depositFunds({value: ether("1"), from: attacker});
+         let initC20InvestBalance = await getBal(c20Invest.address);
+         
+         await time.increase(1);
+         await c20.updatePrice(100000, { from: fundWallet });
+         
+         await expectRevert(
+            reentrancyGetTokens.attackC20Invest({from: attacker}),
+            "C20Invest: getTokens refund error"
+         );
+         
+         let finalC20InvestBalance = await getBal(c20Invest.address);
+         let finalAttackerBalance = await getBal(reentrancyGetTokens.address);
+         
+         expect(finalC20InvestBalance).to.be.bignumber.equal(ether("11"));
+         expect(finalAttackerBalance).to.be.bignumber.equal(ether("0"))
+        
+      }
+    );
+  });
+  
+});

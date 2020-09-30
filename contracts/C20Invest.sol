@@ -25,7 +25,7 @@ contract C20Invest is Initializable {
     
     /// @dev Track unconverted ether to prevent accidental withdrawal
     /// by owner
-    uint256 public unconvertedEther = 0;
+    uint256 public unconvertedEther;
 
     /// @dev The minimum investment a user is allowed to send
     uint256 public minInvestment;
@@ -74,16 +74,22 @@ contract C20Invest is Initializable {
         _owner = owner;
         _c20Instance = C20(payable(c20Address));
         minInvestment = 0.1 ether;
+        unconvertedEther = 0;
     }
 
     /// @dev Allows changing the address of the C20 contract in the
-    /// event of an upgrade. The inheriting contract should wrap this
-    /// function with onlyOwner to protect from it being called by
-    /// anyone.
+    /// event of an upgrade.
     /// @param c20Address The address of the currently active
     /// C20 smart contract
     function setC20Address(address c20Address) external onlyOwner {
         _c20Instance = C20(payable(c20Address));
+    }
+    
+    /// @dev Allows changing the minimum investment should the price
+    /// of ether appreciate or depreciate.
+    /// @param amount The new minimum investment in wei
+    function setMinInvestment(uint256 amount) external onlyOwner {
+        minInvestment = amount;
     }
 
     /// @dev The main function called by receive(). Records the
